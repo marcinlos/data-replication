@@ -1,56 +1,26 @@
 
-from replication import *
+from replication import costMatrix, minimalReplication, totalCost
+from replication import closestReplicas
+
 from random_data import randomLinks, randomSites, randomItems, randomTraffic
 from ui import printCostMatrix
 
 
-# Problem instance
-
-items = {
-    'file1': Item(10, 'site1'),
-    'file2': Item(100, 'site3')
-}
-
-sites = {
-    'site1': 1000,
-    'site2': 900,
-    'site3': 500,
-}
-
-links = {
-    ('site1', 'site2'): 11,
-    ('site3', 'site2'): 20,
-}
-
-reads = {
-    ('site1', 'file1'): 3,
-    ('site2', 'file2'): 1,
-}
-
-writes = {
-    ('site1', 'file2'): 1,
-    ('site3', 'file1'): 2,
-}
-
-# end of problem instance
-
-replicas = {
-    'file1': {'site1', 'site2'},
-    'file2': {'site3'}
-}
-
-
 if __name__ == '__main__':
-    #total = totalCost(reads, writes, closest, cost, items, replicas)
-
-    sites = randomSites(5)
-    links = randomLinks(sites, 0.5)
+    sites = randomSites(100)
+    links = randomLinks(sites, avg_degree=8)
     cost = costMatrix(sites, links)
+    items = randomItems(1000, sites)
 
-    items = randomItems(20, sites)
-    reads = randomTraffic(100, sites, items)
-    writes = randomTraffic(10, sites, items)
+    rwRatio = 0.05
+    readCount = 1000000
+    writeCount = int(readCount * rwRatio)
 
-#    closest = closestReplicas(sites, items, replicas, cost)
-    printCostMatrix(sites, cost)
-    print items
+    reads = randomTraffic(readCount, sites, items)
+    writes = randomTraffic(writeCount, sites, items)
+
+    minimal = minimalReplication(items)
+    closest = closestReplicas(sites, items, minimal, cost)
+
+    baseCost = totalCost(reads, writes, closest, cost, items, minimal)
+    print 'Base cost (no replicas):', baseCost

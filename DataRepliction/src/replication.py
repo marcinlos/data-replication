@@ -54,3 +54,17 @@ def closestReplicas(sites, items, replicas, cost):
                     closest[site, item] = replica
 
     return closest
+
+
+def totalUsedStorage(items, replicas):
+    used = defaultdict(int)
+    for item, sites in replicas.iteritems():
+        size = items[item].size
+        for site in sites:
+            used[site] += size
+
+    return used
+
+
+def minimalReplication(items):
+    return {name: {item.primary} for name, item in items.iteritems()}

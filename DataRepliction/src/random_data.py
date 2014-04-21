@@ -9,22 +9,21 @@ def randIntGen(a, b):
     return lambda: random.randint(a, b)
 
 
-def randomLinks(V, density=0.2, min_weight=1, max_weight=5):
+def randomLinks(V, avg_degree=5, min_weight=1, max_weight=5):
     """ Creates random connected directed weighted graph with vertex set V,
-    weights between min_weight and max_weight, and given density (i.e. fraction
-    of all edges).
+    weights between min_weight and max_weight, and given average degree.
 
     Distribution of this random variable is far from uniform on the set of all
     connected graphs. Vertices that appear earlier on the list are likely
     to have higher degree than those that follow.
 
     Warning: it's O(|V|^2) for fixed density, but performance degrades severly
-    as density approaches 1 (as for hash table and load factor)
+    as average degree approaches |V| (as for hash table and load factor)
     """
     V = list(V)
     n = len(V)
     E = {}
-    total_edges = density * (n * (n - 1)) / 2
+    total_edges = n * avg_degree / 2
 
     used = [V[0]]
 
@@ -46,12 +45,12 @@ def randomLinks(V, density=0.2, min_weight=1, max_weight=5):
     return E
 
 
-def randomSites(n, min_capacity=100, max_capacity=1000):
+def randomSites(n, min_capacity=500, max_capacity=2000):
     rand_capacity = randIntGen(min_capacity, max_capacity)
     return {'site_{}'.format(k): rand_capacity() for k in xrange(1, n + 1)}
 
 
-def randomItems(n, capacity, min_size=10, max_size=100):
+def randomItems(n, capacity, min_size=10, max_size=60):
     """ Generates items - sizes and primary sites. May fail even in cases when
     it's possible to find item list subject to specified constraints.
 
@@ -72,13 +71,13 @@ def randomItems(n, capacity, min_size=10, max_size=100):
             used[site] += size
             name = 'item_{}'.format(i)
             items[name] = Item(size, site)
+        else:
+            attempts += 1
 
-        attempts += 1
-
-        # Since we haven't even started considering replicas, and we are
-        # already out of space, it doesn't make much sense to proceed
-        if attempts > 100:
-            raise Exception('Couldn\'t add item in 100 attempts')
+            # Since we haven't even started considering replicas, and we are
+            # already out of space, it doesn't make much sense to proceed
+            if attempts > 100:
+                raise Exception('Couldn\'t add item in 100 attempts')
 
     return items
 
@@ -95,10 +94,3 @@ def randomTraffic(n, sites, items):
         traffic[site, item] += 1
 
     return traffic
-
-
-
-
-
-
-
