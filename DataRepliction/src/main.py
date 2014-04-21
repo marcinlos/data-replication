@@ -4,16 +4,17 @@ from replication import closestReplicas
 
 from random_data import randomLinks, randomSites, randomItems, randomTraffic
 from ui import printCostMatrix
+from SRA import SRA
 
 
 if __name__ == '__main__':
-    sites = randomSites(100)
-    links = randomLinks(sites, avg_degree=8)
+    sites = randomSites(30)
+    links = randomLinks(sites, avg_degree=4)
     cost = costMatrix(sites, links)
-    items = randomItems(1000, sites)
+    items = randomItems(100, sites, max_size=20)
 
-    rwRatio = 0.05
-    readCount = 1000000
+    rwRatio = 0.000
+    readCount = 100000
     writeCount = int(readCount * rwRatio)
 
     reads = randomTraffic(readCount, sites, items)
@@ -23,4 +24,13 @@ if __name__ == '__main__':
     closest = closestReplicas(sites, items, minimal, cost)
 
     baseCost = totalCost(reads, writes, closest, cost, items, minimal)
+    
+    
+    sra = SRA(sites, cost, items, reads, writes)
+    replicas = sra.run()
+    
+    closest = closestReplicas(sites, items, replicas, cost)
+    finalCost =  totalCost(reads, writes, closest, cost, items, replicas)
+    
     print 'Base cost (no replicas):', baseCost
+    print 'Final cost:             ', finalCost
