@@ -23,7 +23,7 @@ links = {
 
 reads = {
     ('site1', 'file1'): 3,
-    ('site3', 'file2'): 1,
+    ('site2', 'file2'): 1,
 }
 
 writes = {
@@ -31,20 +31,20 @@ writes = {
     ('site3', 'file1'): 2,
 }
 
-replication = {
+replicas = {
     'file1': {'site1', 'site2'},
-    'file2': {'site2'}
+    'file2': {'site3'}
 }
 
 
-def findClosestReplicas(sites, items, replication, cost):
+def findClosestReplicas(sites, items, replicas, cost):
     closest = {}
 
     for site in sites:
-        for item in replication:
+        for item in replicas:
             closest[site, item] = items[item].primary
 
-            for replica in replication[item]:
+            for replica in replicas[item]:
                 best = closest[site, item]
                 if cost[site, replica] < cost[site, best]:
                     closest[site, item] = replica
@@ -69,15 +69,35 @@ def computeCostMatrix(V, E):
     return cost
 
 
+def computeTotalCost(reads, writes, closest, cost, items, replicas):
+    total = 0
+    for (site, item), count in reads.iteritems():
+        replica = closest[site, item]
+        weight = items[item].weight
+        total += count * weight * cost[site, replica]
+
+    for (site, item), count in writes.iteritems():
+        primary = items[item].primary
+        weight = items[item].weight
+
+        for replica in replicas[item] | {site}:
+            total += count * weight * cost[replica, primary]
+
+    return total
+
+
 if __name__ == '__main__':
     cost = computeCostMatrix(sites, links)
-    closest = findClosestReplicas(sites, items, replication, cost)
+    closest = findClosestReplicas(sites, items, replicas, cost)
 
     for site in sites:
         print '{}:'.format(site)
         for item in items:
             best = closest[site, item]
             print '    {}: {}, cost: {}'.format(item, best, cost[site, best])
+
+    total = computeTotalCost(reads, writes, closest, cost, items, replicas)
+    print total
 
 
 
