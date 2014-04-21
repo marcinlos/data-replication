@@ -3,7 +3,7 @@ from _collections import defaultdict
 import sys
 from collections import namedtuple
 
-from graph import randomConnectedGraph
+from random_data import randomLinks
 
 
 Item = namedtuple('Item', ['weight', 'primary'])
@@ -109,15 +109,7 @@ def printCostMatrix(sites, cost):
 if __name__ == '__main__':
     cost = computeCostMatrix(sites, links)
     closest = findClosestReplicas(sites, items, replicas, cost)
-
-    for site in sites:
-        print '{}:'.format(site)
-        for item in items:
-            best = closest[site, item]
-            print '    {}: {}, cost: {}'.format(item, best, cost[site, best])
-
     printCostMatrix(sites, cost)
-
     total = computeTotalCost(reads, writes, closest, cost, items, replicas)
 
 
