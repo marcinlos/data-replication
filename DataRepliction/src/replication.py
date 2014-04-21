@@ -3,6 +3,9 @@ from _collections import defaultdict
 import sys
 from collections import namedtuple
 
+from graph import randomConnectedGraph
+
+
 Item = namedtuple('Item', ['weight', 'primary'])
 
 # Problem instance
@@ -91,6 +94,18 @@ def findClosestReplicas(sites, items, replicas, cost):
     return closest
 
 
+def printCostMatrix(sites, cost):
+    print '         ',
+    for v in sites:
+        print '{:^6}'.format(v),
+    print
+    for u in sites:
+        print '{:7}'.format(u),
+        for v in sites:
+            print '{:6}'.format(cost[u, v]),
+        print
+
+
 if __name__ == '__main__':
     cost = computeCostMatrix(sites, links)
     closest = findClosestReplicas(sites, items, replicas, cost)
@@ -101,10 +116,9 @@ if __name__ == '__main__':
             best = closest[site, item]
             print '    {}: {}, cost: {}'.format(item, best, cost[site, best])
 
-    tot = 0
+    printCostMatrix(sites, cost)
+
     total = computeTotalCost(reads, writes, closest, cost, items, replicas)
-    tot += total
-    #print total
 
 
 
