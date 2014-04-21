@@ -40,7 +40,7 @@ class SRA(object):
         possible_replications = defaultdict(set)
         for site, free in self.free.iteritems():
             for item in self.items:
-                if self.size(item) < free:
+                if self.size(item) < free and self.items[item].primary != site:
                     possible_replications[site].add(item)
 
         as_list = list(possible_replications)
@@ -56,7 +56,6 @@ class SRA(object):
             for item in set(fitting_items):
                 size = self.items[item].size
                 free = self.free[site]
-
                 b = self.benefit(site, item)
 
                 if b <= 0 or size > free:
@@ -69,7 +68,8 @@ class SRA(object):
                 fitting_items.remove(best_item)
                 size = self.items[best_item].size
                 self.free[site] -= size
-                self.replicas[item].add(site)
+                self.replicas[best_item].add(site)
+
                 for s in possible_replications:
                     prev = self.closest[best_item][s]
                     if self.cost[s, site] < self.cost[s, prev]:
@@ -79,7 +79,6 @@ class SRA(object):
                 del possible_replications[site]
                 as_list.remove(site)
 
-        print self.replicas
         return self.replicas
 
     def size(self, item):
