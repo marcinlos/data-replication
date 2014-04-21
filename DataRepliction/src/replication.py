@@ -5,6 +5,8 @@ from collections import namedtuple
 
 Item = namedtuple('Item', ['weight', 'primary'])
 
+# Problem instance
+
 items = {
     'file1': Item(10, 'site1'),
     'file2': Item(100, 'site3')
@@ -31,25 +33,13 @@ writes = {
     ('site3', 'file1'): 2,
 }
 
+
+# End of problem instance
+
 replicas = {
     'file1': {'site1', 'site2'},
     'file2': {'site3'}
 }
-
-
-def findClosestReplicas(sites, items, replicas, cost):
-    closest = {}
-
-    for site in sites:
-        for item in replicas:
-            closest[site, item] = items[item].primary
-
-            for replica in replicas[item]:
-                best = closest[site, item]
-                if cost[site, replica] < cost[site, best]:
-                    closest[site, item] = replica
-
-    return closest
 
 
 def computeCostMatrix(V, E):
@@ -86,6 +76,21 @@ def computeTotalCost(reads, writes, closest, cost, items, replicas):
     return total
 
 
+def findClosestReplicas(sites, items, replicas, cost):
+    closest = {}
+
+    for site in sites:
+        for item in replicas:
+            closest[site, item] = items[item].primary
+
+            for replica in replicas[item]:
+                best = closest[site, item]
+                if cost[site, replica] < cost[site, best]:
+                    closest[site, item] = replica
+
+    return closest
+
+
 if __name__ == '__main__':
     cost = computeCostMatrix(sites, links)
     closest = findClosestReplicas(sites, items, replicas, cost)
@@ -96,8 +101,10 @@ if __name__ == '__main__':
             best = closest[site, item]
             print '    {}: {}, cost: {}'.format(item, best, cost[site, best])
 
+    tot = 0
     total = computeTotalCost(reads, writes, closest, cost, items, replicas)
-    print total
+    tot += total
+    #print total
 
 
 
