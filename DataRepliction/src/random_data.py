@@ -1,5 +1,12 @@
 
 import random
+from replication import Item
+from _collections import defaultdict
+from collections import Counter
+
+
+def randIntGen(a, b):
+    return lambda: random.randint(a, b)
 
 
 def randomLinks(V, density=0.2, min_weight=1, max_weight=5):
@@ -21,7 +28,7 @@ def randomLinks(V, density=0.2, min_weight=1, max_weight=5):
 
     used = [V[0]]
 
-    rand_weight = lambda: random.randint(min_weight, max_weight)
+    rand_weight = randIntGen(min_weight, max_weight)
 
     for v in V[1:]:
         u = random.choice(used)
@@ -37,3 +44,61 @@ def randomLinks(V, density=0.2, min_weight=1, max_weight=5):
             edge_count += 1
 
     return E
+
+
+def randomSites(n, min_capacity=100, max_capacity=1000):
+    rand_capacity = randIntGen(min_capacity, max_capacity)
+    return {'site_{}'.format(k): rand_capacity() for k in xrange(1, n + 1)}
+
+
+def randomItems(n, capacity, min_size=10, max_size=100):
+    """ Generates items - sizes and primary sites. May fail even in cases when
+    it's possible to find item list subject to specified constraints.
+
+    capacity : map (site name -> site capacity)
+    """
+    rand_size = randIntGen(min_size, max_size)
+    used = defaultdict(int)
+    site_list = list(capacity)
+    items = {}
+
+    attempts = 0
+    i = 0
+    while i < n:
+        size = rand_size()
+        site = random.choice(site_list)
+        if used[site] + size < capacity[site]:
+            i += 1
+            used[site] += size
+            name = 'item_{}'.format(i)
+            items[name] = Item(size, site)
+
+        attempts += 1
+
+        # Since we haven't even started considering replicas, and we are
+        # already out of space, it doesn't make much sense to proceed
+        if attempts > 100:
+            raise Exception('Couldn\'t add item in 100 attempts')
+
+    return items
+
+
+def randomTraffic(n, sites, items):
+    traffic = Counter()
+
+    sites = list(sites)
+    items = list(items)
+
+    for _ in xrange(n):
+        site = random.choice(sites)
+        item = random.choice(items)
+        traffic[site, item] += 1
+
+    return traffic
+
+
+
+
+
+
+

@@ -17,7 +17,7 @@ class Test(unittest.TestCase):
             ('b', 'c'): 2,
             ('b', 'd'): 3,
         }
-        cost = computeCostMatrix(sites, links)
+        cost = costMatrix(sites, links)
         self.assertEqual(cost['a', 'a'], 0)
         self.assertEqual(cost['a', 'b'], 1)
         self.assertEqual(cost['a', 'c'], 3)
