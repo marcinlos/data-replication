@@ -1,13 +1,14 @@
 
-import replication
 from itertools import count
-from replication import minimalReplication, closestReplicas
+from replication import minimalReplication
 from _collections import defaultdict
+import numpy as np
 
 
 def roundRobin(seq):
     for i in count():
-        yield seq[i % len(seq)]
+        idx = i % len(seq)
+        yield idx, seq[idx]
 
 
 class SRA(object):
@@ -47,7 +48,7 @@ class SRA(object):
         site_iter = roundRobin(as_list)
 
         while possible_replications:
-            site = site_iter.next()
+            _, site = site_iter.next()
             max_benefit = 0
             best_item = None
 
@@ -103,6 +104,136 @@ class SRA(object):
         return (read_cost + write_cost - update_cost) / float(size)
 
 
+class SRAOpt(object):
+    def __init__(self, sites, cost, items, reads, writes):
+        self.sites = tuple(sites)
+        self.items = tuple(items)
 
+        self.site_names = tuple(sites)
+        self.item_names = tuple(items)
 
+        self.size = tuple(items[i].size for i in self.items)
+        self.free = np.fromiter((sites[s] for s in self.sites), dtype=np.int32)
 
+        site_lookup = {site: n for n, site in enumerate(self.sites)}
+        item_lookup = {item: n for n, item in enumerate(self.items)}
+
+        self.primary = tuple(site_lookup[items[i].primary] for i in self.items)
+
+        n = len(sites)
+        m = len(items)
+
+        self.cost = np.empty(shape=(n, n), dtype=np.int32)
+        for i in xrange(n):
+            for j in xrange(n):
+                u, v = self.sites[i], self.sites[j]
+                self.cost[i, j] = cost[u, v]
+
+        self.reads = np.empty(shape=(n, m), dtype=np.int32)
+        self.writes = np.empty(shape=(n, m), dtype=np.int32)
+
+        for i in xrange(n):
+            for j in xrange(m):
+                site = self.sites[i]
+                item = self.items[j]
+                self.reads[i, j] = reads[site, item]
+                self.writes[i, j] = writes[site, item]
+
+        self.replicas = np.zeros(shape=(n, m), dtype=np.bool8)
+        self.closest = np.empty(shape=(n, m), dtype=np.int32)
+
+        for name, item in items.iteritems():
+            i = item_lookup[name]
+            s = site_lookup[item.primary]
+            self.replicas[s, i] = 1
+            self.free[s] -= item.size
+            self.closest[:, i] = s
+
+    def fits(self, item, site):
+        return self.size[item] < self.free[site]
+
+    def possibleNewReplicas(self):
+        possible = []
+        for site in self.site_indices():
+            fitting = []
+            for item in self.item_indices():
+                if self.fits(item, site) or self.primary[item] == site:
+                    fitting.append(item)
+            possible.append((site, fitting))
+        return possible
+
+    def run(self):
+        possible = self.possibleNewReplicas()
+        site_iter = roundRobin(possible)
+
+        while possible:
+            idx, (site, fitting) = site_iter.next()
+            max_benefit = 0
+            best_item = None
+
+            for item in set(fitting):
+                size = self.size[item]
+                free = self.free[site]
+                b = self.benefit(site, item)
+
+                if b <= 0 or size > free:
+                    fitting.remove(item)
+                elif b > max_benefit:
+                    max_benefit = b
+                    best_item = item
+
+            if best_item is not None:
+                fitting.remove(best_item)
+                self.replicate(best_item, site, (s for s, _ in possible))
+
+            if not fitting:
+                del possible[idx]
+
+        return self.replicasAsDict()
+
+    def replicate(self, item, site, sites_to_update):
+        size = self.size[item]
+        self.free[site] -= size
+        self.replicas[site, item] = 1
+
+        for s in sites_to_update:
+            prev = self.closest[s, item]
+            if self.cost[s, site] < self.cost[s, prev]:
+                self.closest[s, item] = site
+
+    def replicasAsDict(self):
+        replication = defaultdict(set)
+        for item in self.item_indices():
+            item_name = self.item_names[item]
+            for site in self.site_indices():
+                if self.replicas[site, item]:
+                    site_name = self.site_names[site]
+                    replication[item_name].add(site_name)
+        return replication
+
+    def item_indices(self):
+        return xrange(len(self.items))
+
+    def site_indices(self):
+        return xrange(len(self.sites))
+
+    def benefit(self, site, item):
+        size = self.size[item]
+        closest = self.closest[site, item]
+        read_cost = size * self.cost[site, closest] * self.reads[site, item]
+
+        primary = self.primary[item]
+        write_count = self.writes[site, item]
+
+        write_cost = 0
+        for s in self.site_indices():
+            if self.replicas[s, item] or s == site:
+                write_cost += write_count * size * self.cost[s, primary]
+
+        update_cost = 0
+        for s in self.site_indices():
+            writes = self.writes[s, item]
+            cost = self.cost[site, s]
+            update_cost += writes * size * cost
+
+        return (read_cost + write_cost - update_cost) / float(size)

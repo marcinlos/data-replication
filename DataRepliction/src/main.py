@@ -5,8 +5,7 @@ from replication import costMatrix, minimalReplication, totalCost
 from replication import closestReplicas
 
 from random_data import randomLinks, randomSites, randomItems, randomTraffic
-from ui import printCostMatrix
-from SRA import SRA
+from SRA import SRA, SRAOpt
 
 
 if __name__ == '__main__':
@@ -32,19 +31,20 @@ if __name__ == '__main__':
 
     baseCost = totalCost(reads, writes, closest, cost, items, minimal)
 
-    t.start('constructor')
-    sra = SRA(sites, cost, items, reads, writes)
-    t.stop('constructor')
+    for name, Algorithm in [('simple', SRA), ('numpy', SRAOpt)]:
+        t.start('constructor_{}'.format(name))
+        sra = Algorithm(sites, cost, items, reads, writes)
+        t.stop('constructor_{}'.format(name))
 
-    t.start('run')
-    replicas = sra.run()
-    t.stop('run')
+        t.start('run_{}'.format(name))
+        replicas = sra.run()
+        t.stop('run_{}'.format(name))
 
-    closest = closestReplicas(sites, items, replicas, cost)
-    finalCost = totalCost(reads, writes, closest, cost, items, replicas)
+        closest = closestReplicas(sites, items, replicas, cost)
+        finalCost = totalCost(reads, writes, closest, cost, items, replicas)
 
-    print 'Base cost (no replicas):', baseCost
-    print 'Final cost:             ', finalCost
+        print 'Base cost (no replicas):', baseCost
+        print 'Final cost:             ', finalCost
 
     for event in t:
         time = t[event]
