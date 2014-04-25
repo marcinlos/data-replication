@@ -63,7 +63,6 @@ class Replication(object):
             replicas = minimalReplication(problem.item_info)
 
         self.replicas = replicas
-
         self.closest = self.__findClosestReplicas()
 
     def __findClosestReplicas(self):

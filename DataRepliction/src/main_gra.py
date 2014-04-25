@@ -1,9 +1,5 @@
 
 from replication import costMatrix
-from replication import minimalReplication
-from replication import totalCost
-from replication import checkConstraints
-from replication import closestReplicas
 from random_data import randomLinks, randomSites, randomItems, randomTraffic
 
 from pyevolve import G2DBinaryString
@@ -13,6 +9,7 @@ from pyevolve import Consts
 
 from SRA import SRA
 from GRA import GRA
+from problem import Problem, Replication
 
 
 if __name__ == '__main__':
@@ -25,20 +22,18 @@ if __name__ == '__main__':
     cost = costMatrix(sites, links)
     items = randomItems(M, sites, max_size=20)
 
-    rwRatio = 0.05
+    rwRatio = 0.07
     readCount = 100000
     writeCount = int(readCount * rwRatio)
 
     reads = randomTraffic(readCount, sites, items)
     writes = randomTraffic(writeCount, sites, items)
+    problem = Problem(sites, items, reads, writes, cost)
 
-    gra = GRA(sites, items, reads, writes, cost)
+    gra = GRA(problem)
 
-    minimal = minimalReplication(items)
-    closest = closestReplicas(sites, items, minimal, cost)
-    base_cost = totalCost(reads, writes, closest, cost, items, minimal)
-
-    checkConstraints(minimal, items, sites)
+    minimal = Replication(problem)
+    base_cost = minimal.totalCost()
 
     print 'Initial cost:', base_cost
 
@@ -51,20 +46,20 @@ if __name__ == '__main__':
 
     ga.setMinimax(Consts.minimaxType['minimize'])
     ga.selector.set(Selectors.GRouletteWheel)
-    ga.setGenerations(20)
+    ga.setGenerations(10)
 
     ga.evolve(freq_stats=1)
 
     best = ga.bestIndividual()
     replicas = gra.genomeToReplicas(best)
-    closest = closestReplicas(sites, items, replicas, cost)
-    final_cost = totalCost(reads, writes, closest, cost, items, replicas)
+    solution = Replication(problem, replicas)
+    final_cost = solution.totalCost()
     print 'Final cost (GRA):', final_cost
 
-    sra = SRA(sites, cost, items, reads, writes)
+    sra = SRA(problem)
     replicas = sra.run()
-    closest = closestReplicas(sites, items, replicas, cost)
-    final_cost = totalCost(reads, writes, closest, cost, items, replicas)
+    solution = Replication(problem, replicas)
+    final_cost = solution.totalCost()
     print 'Final cost (SRA):', final_cost
 
 

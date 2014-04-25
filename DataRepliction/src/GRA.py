@@ -2,14 +2,14 @@
 from _collections import defaultdict
 from random import randint
 from SRA import SRA
-from problem import Problem, Replication
+from problem import Replication
 from pyevolve import Util
 
 
 class RandomizedSRA(SRA):
 
-    def __init__(self, *args, **kwargs):
-        super(RandomizedSRA, self).__init__(*args, **kwargs)
+    def __init__(self, problem):
+        super(RandomizedSRA, self).__init__(problem)
 
     def siteIterator(self, possible):
         def randSeq():
@@ -22,8 +22,8 @@ class RandomizedSRA(SRA):
 
 class GRA(object):
 
-    def __init__(self, sites, items, reads, writes, cost):
-        self.data = Problem(sites, items, reads, writes, cost)
+    def __init__(self, problem):
+        self.data = problem
         self.mutation_prob = 0.1
 
     def eval(self, genome):
@@ -31,8 +31,7 @@ class GRA(object):
         return self.totalCost(replicas)
 
     def initialize(self, genome, **kwargs):
-        sra = RandomizedSRA(self.data.capacity, self.data.cost,
-            self.data.item_info, self.data.reads, self.data.writes)
+        sra = RandomizedSRA(self.data)
         replicas = sra.run()
         self.replicasToGenome(replicas, genome)
 

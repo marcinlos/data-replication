@@ -5,7 +5,7 @@ from replication import minimalReplication
 from _collections import defaultdict
 
 
-def roundRobin(seq):
+def round_robin(seq):
     for i in count():
         idx = i % len(seq)
         yield idx, seq[idx]
@@ -13,35 +13,34 @@ def roundRobin(seq):
 
 class SRA(object):
 
-    def __init__(self, sites, cost, items, reads, writes):
-        self.__sites = sites
-        self.cost = cost
-        self.__items = items
+    def __init__(self, problem):
+        self.cost = problem.cost
+        self.items = problem.item_info
 
         self.reads = defaultdict(lambda: defaultdict(int))
-        for (site, item), count in reads.iteritems():
+        for (site, item), count in problem.reads.iteritems():
             self.reads[site][item] = count
 
         self.writes = defaultdict(lambda: defaultdict(int))
-        for (site, item), count in writes.iteritems():
+        for (site, item), count in problem.writes.iteritems():
             self.writes[item][site] = count
 
-        self.free = dict(sites)
-        self.replicas = minimalReplication(items)
+        self.free = dict(problem.capacity)
+        self.replicas = minimalReplication(problem.item_info)
 
         for item, replicationSites in self.replicas.iteritems():
             for s in replicationSites:
-                self.free[s] -= items[item].size
+                self.free[s] -= problem.size[item]
 
         self.closest = {}
-        for name, item in items.iteritems():
-            self.closest[name] = {site: item.primary for site in sites}
+        for name, item in problem.item_info.iteritems():
+            self.closest[name] = {site: item.primary for site in problem.sites}
 
     def possibleReplicas(self):
         possible = []
         for site, free in self.free.iteritems():
             fitting = []
-            for item in self.__items:
+            for item in self.items:
                 if self.size(item) < free and self.primary(item) != site:
                     fitting.append(item)
 
@@ -49,7 +48,7 @@ class SRA(object):
         return possible
 
     def siteIterator(self, possible):
-        return roundRobin(possible)
+        return round_robin(possible)
 
     def run(self):
         possible = self.possibleReplicas()
@@ -61,7 +60,7 @@ class SRA(object):
             best_item = None
 
             for item in set(fitting):
-                size = self.__items[item].size
+                size = self.items[item].size
                 free = self.free[site]
                 b = self.benefit(site, item)
 
@@ -73,7 +72,7 @@ class SRA(object):
 
             if best_item:
                 fitting.remove(best_item)
-                size = self.__items[best_item].size
+                size = self.items[best_item].size
                 self.free[site] -= size
                 self.replicas[best_item].add(site)
 
@@ -88,17 +87,17 @@ class SRA(object):
         return self.replicas
 
     def primary(self, item):
-        return self.__items[item].primary
+        return self.items[item].primary
 
     def size(self, item):
-        return self.__items[item].size
+        return self.items[item].size
 
     def benefit(self, site, item):
         size = self.size(item)
         closest = self.closest[item][site]
         read_cost = size * self.cost[site, closest] * self.reads[site][item]
 
-        primary = self.__items[item].primary
+        primary = self.items[item].primary
         write_count = self.writes[item][site]
 
         write_cost = 0

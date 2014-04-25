@@ -6,6 +6,8 @@ from replication import costMatrix, minimalReplication, totalCost,\
 from replication import closestReplicas
 
 from random_data import randomLinks, randomSites, randomItems, randomTraffic
+
+from problem import Problem, Replication
 from SRA import SRA
 
 
@@ -25,15 +27,15 @@ if __name__ == '__main__':
     reads = randomTraffic(readCount, sites, items)
     writes = randomTraffic(writeCount, sites, items)
 
+    problem = Problem(sites, items, reads, writes, cost)
+
     t.stop('data creation')
 
-    minimal = minimalReplication(items)
-    closest = closestReplicas(sites, items, minimal, cost)
-
-    baseCost = totalCost(reads, writes, closest, cost, items, minimal)
+    minimal = Replication(problem)
+    base_cost = minimal.totalCost()
 
     t.start('constructor')
-    sra = SRA(sites, cost, items, reads, writes)
+    sra = SRA(problem)
     t.stop('constructor')
 
     t.start('run')
@@ -41,12 +43,12 @@ if __name__ == '__main__':
     t.stop('run')
 
     checkConstraints(replicas, items, sites)
-    closest = closestReplicas(sites, items, replicas, cost)
-    finalCost = totalCost(reads, writes, closest, cost, items, replicas)
+    solution = Replication(problem, replicas)
+    final_cost = solution.totalCost()
 
-    change = 1 - float(finalCost) / baseCost
-    print 'Initial cost:    ', baseCost
-    print 'Final cost:      ', finalCost
+    change = 1 - float(final_cost) / base_cost
+    print 'Initial cost:    ', base_cost
+    print 'Final cost:      ', final_cost
     print 'Improvement:      {:.2%}'.format(change)
     print
 
