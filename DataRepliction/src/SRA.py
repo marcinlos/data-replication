@@ -40,49 +40,51 @@ class SRA(object):
             self.closest[name] = {site: item.primary for site in sites}
 
     def run(self):
-        possible_replications = defaultdict(set)
+        possible = []
         for site, free in self.free.iteritems():
+            fitting = []
             for item in self.items:
-                if self.size(item) < free and self.items[item].primary != site:
-                    possible_replications[site].add(item)
+                if self.size(item) < free and self.primary(item) != site:
+                    fitting.append(item)
 
-        as_list = list(possible_replications)
-        site_iter = roundRobin(as_list)
+            possible.append((site, fitting))
 
-        while possible_replications:
-            _, site = site_iter.next()
+        site_iter = roundRobin(possible)
+
+        while possible:
+            idx, (site, fitting) = site_iter.next()
             max_benefit = 0
             best_item = None
 
-            fitting_items = possible_replications[site]
-
-            for item in set(fitting_items):
+            for item in set(fitting):
                 size = self.items[item].size
                 free = self.free[site]
                 b = self.benefit(site, item)
 
                 if b <= 0 or size > free:
-                    fitting_items.remove(item)
+                    fitting.remove(item)
                 elif b > max_benefit:
                     max_benefit = b
                     best_item = item
 
             if best_item:
-                fitting_items.remove(best_item)
+                fitting.remove(best_item)
                 size = self.items[best_item].size
                 self.free[site] -= size
                 self.replicas[best_item].add(site)
 
-                for s in possible_replications:
+                for s in (s for s, _ in possible):
                     prev = self.closest[best_item][s]
                     if self.cost[s, site] < self.cost[s, prev]:
                         self.closest[best_item][s] = site
 
-            if not fitting_items:
-                del possible_replications[site]
-                as_list.remove(site)
+            if not fitting:
+                del possible[idx]
 
         return self.replicas
+
+    def primary(self, item):
+        return self.items[item].primary
 
     def size(self, item):
         return self.items[item].size
