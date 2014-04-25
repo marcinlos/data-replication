@@ -41,6 +41,20 @@ def totalCost(reads, writes, closest, cost, items, replicas):
     return total
 
 
+def checkConstraints(replicas, items, capacity):
+    used = defaultdict(int)
+    for item, info in items.iteritems():
+        primary = info.primary
+        size = info.size
+        if not primary in replicas[item]:
+            raise Exception('Item {} removed fom primary site {}'
+                .format(item, primary))
+        for site in replicas[item]:
+            used[site] += size
+            if used[site] > capacity[site]:
+                raise Exception('Site {} overloaded'.format(site))
+
+
 def closestReplicas(sites, items, replicas, cost):
     closest = {}
 

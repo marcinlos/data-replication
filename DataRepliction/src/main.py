@@ -1,7 +1,8 @@
 
 from util import Stopwatch
 
-from replication import costMatrix, minimalReplication, totalCost
+from replication import costMatrix, minimalReplication, totalCost,\
+    checkConstraints
 from replication import closestReplicas
 
 from random_data import randomLinks, randomSites, randomItems, randomTraffic
@@ -40,12 +41,15 @@ if __name__ == '__main__':
         replicas = sra.run()
         t.stop('run {}'.format(name))
 
+        checkConstraints(replicas, items, sites)
         closest = closestReplicas(sites, items, replicas, cost)
         finalCost = totalCost(reads, writes, closest, cost, items, replicas)
 
+        change = 1 - float(finalCost) / baseCost
         print name
         print 'Initial cost:    ', baseCost
         print 'Final cost:      ', finalCost
+        print 'Improvement:      {:.2%}'.format(change)
         print
 
     print 'Data creation: {}s'.format(t['data creation'])
