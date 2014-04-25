@@ -1,4 +1,5 @@
 
+
 from itertools import count
 from replication import minimalReplication
 from _collections import defaultdict
@@ -11,20 +12,7 @@ def roundRobin(seq):
         yield idx, seq[idx]
 
 
-class Tracer(object):
-
-    def __init__(self):
-        self.counter = defaultdict(int)
-
-    def tick(self, name):
-        self.counter[name] += 1
-
-    def printAll(self):
-        for name, count in self.counter.iteritems():
-            print '{}: {}'.format(name, count)
-
-
-class SRA(Tracer):
+class SRA(object):
 
     def __init__(self, sites, cost, items, reads, writes):
         super(SRA, self).__init__()
@@ -62,7 +50,6 @@ class SRA(Tracer):
         site_iter = roundRobin(as_list)
 
         while possible_replications:
-            self.tick('iters')
             _, site = site_iter.next()
             max_benefit = 0
             best_item = None
@@ -70,7 +57,6 @@ class SRA(Tracer):
             fitting_items = possible_replications[site]
 
             for item in set(fitting_items):
-                self.tick('items checked')
                 size = self.items[item].size
                 free = self.free[site]
                 b = self.benefit(site, item)
@@ -88,7 +74,6 @@ class SRA(Tracer):
                 self.replicas[best_item].add(site)
 
                 for s in possible_replications:
-                    self.tick('sites updated due to replication')
                     prev = self.closest[best_item][s]
                     if self.cost[s, site] < self.cost[s, prev]:
                         self.closest[best_item][s] = site
@@ -97,14 +82,12 @@ class SRA(Tracer):
                 del possible_replications[site]
                 as_list.remove(site)
 
-        self.printAll()
         return self.replicas
 
     def size(self, item):
         return self.items[item].size
 
     def benefit(self, site, item):
-        self.tick('benefit called')
         size = self.size(item)
         closest = self.closest[item][site]
         read_cost = size * self.cost[site, closest] * self.reads[site][item]
@@ -115,17 +98,15 @@ class SRA(Tracer):
         write_cost = 0
         for replica in self.replicas[item] | {site}:
             write_cost += write_count * size * self.cost[replica, primary]
-            self.tick('writes summed')
 
         update_cost = 0
         for s, count in self.writes[item].iteritems():
             update_cost += count * size * self.cost[site, s]
-            self.tick('updates summed')
 
         return (read_cost + write_cost - update_cost) / float(size)
 
 
-class SRAOpt(Tracer):
+class SRAOpt(object):
     def __init__(self, sites, cost, items, reads, writes):
         super(SRAOpt, self).__init__()
         self.sites = tuple(sites)
@@ -193,13 +174,11 @@ class SRAOpt(Tracer):
         site_iter = roundRobin(possible)
 
         while possible:
-            self.tick('iters')
             idx, (site, fitting) = site_iter.next()
             max_benefit = 0
             best_item = None
 
             for item in set(fitting):
-                self.tick('items checked')
                 size = self.size[item]
                 free = self.free[site]
                 b = self.benefit(site, item)
@@ -217,7 +196,6 @@ class SRAOpt(Tracer):
             if not fitting:
                 del possible[idx]
 
-        self.printAll()
         return self.replicasAsDict()
 
     def replicate(self, item, site, sites_to_update):
@@ -226,7 +204,6 @@ class SRAOpt(Tracer):
         self.replicas[site, item] = 1
 
         for s in sites_to_update:
-            self.tick('sites updated due to replication')
             prev = self.closest[s, item]
             if self.cost[s, site] < self.cost[s, prev]:
                 self.closest[s, item] = site
@@ -249,31 +226,28 @@ class SRAOpt(Tracer):
     def site_indices(self):
         return xrange(len(self.sites))
 
+    def write_cost(self, site, item):
+        size = self.size[item]
+        primary = self.primary[item]
+        write_count = self.writes[site, item]
+
+        unit_cost = np.dot(self.replicas[:, item], self.cost[:, primary])
+        write_cost = write_count * unit_cost
+
+        if self.replicas[site, item] == 0:
+            write_cost += write_count * size * self.cost[site, primary]
+        return write_cost
+
+    def update_cost(self, site, item):
+        unit_cost = np.dot(self.cost[site, :], self.writes[:, item])
+        return unit_cost * self.size[item]
+
     def benefit(self, site, item):
-        self.tick('benefit called')
         size = self.size[item]
         closest = self.closest[site, item]
         read_cost = size * self.cost[site, closest] * self.reads[site, item]
 
-        primary = self.primary[item]
-        write_count = self.writes[site, item]
-
-        write_cost = 0
-        #for s in self.site_indices():
-        #    if self.replicas[s, item] or s == site:
-        #        write_cost += write_count * size * self.cost[s, primary]
-
-        for s in self.replication_scheme[item] | {site}:
-#         for s in self.site_indices():
-#             if self.replicas[s, item] or s == site:
-            write_cost += write_count * size * self.cost[s, primary]
-            self.tick('writes summed')
-
-        update_cost = 0
-        for s in self.site_indices():
-            writes = self.writes[s, item]
-            cost = self.cost[site, s]
-            update_cost += writes * size * cost
-            self.tick('updates summed')
+        write_cost = self.write_cost(site, item)
+        update_cost = self.update_cost(site, item)
 
         return (read_cost + write_cost - update_cost) / float(size)
