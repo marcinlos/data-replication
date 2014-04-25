@@ -32,20 +32,30 @@ if __name__ == '__main__':
     baseCost = totalCost(reads, writes, closest, cost, items, minimal)
 
     for name, Algorithm in [('simple', SRA), ('numpy', SRAOpt)]:
-        t.start('constructor_{}'.format(name))
+        t.start('constructor {}'.format(name))
         sra = Algorithm(sites, cost, items, reads, writes)
-        t.stop('constructor_{}'.format(name))
+        t.stop('constructor {}'.format(name))
 
-        t.start('run_{}'.format(name))
+        t.start('run {}'.format(name))
         replicas = sra.run()
-        t.stop('run_{}'.format(name))
+        t.stop('run {}'.format(name))
 
         closest = closestReplicas(sites, items, replicas, cost)
         finalCost = totalCost(reads, writes, closest, cost, items, replicas)
 
-        print 'Base cost (no replicas):', baseCost
-        print 'Final cost:             ', finalCost
+        print name
+        print 'Initial cost:    ', baseCost
+        print 'Final cost:      ', finalCost
+        print
 
-    for event in t:
-        time = t[event]
-        print '{}: {}s'.format(event, time)
+    print 'Data creation: {}s'.format(t['data creation'])
+    print
+
+    print 'Pretty:'
+    print '  Preprocessing: {}s'.format(t['constructor simple'])
+    print '  Computation:   {}s'.format(t['run simple'])
+    print
+
+    print 'Numpy:'
+    print '  Preprocessing: {}s'.format(t['constructor numpy'])
+    print '  Computation:   {}s'.format(t['run numpy'])
