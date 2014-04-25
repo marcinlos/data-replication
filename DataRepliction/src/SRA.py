@@ -15,10 +15,9 @@ def roundRobin(seq):
 class SRA(object):
 
     def __init__(self, sites, cost, items, reads, writes):
-        super(SRA, self).__init__()
-        self.sites = sites
+        self.__sites = sites
         self.cost = cost
-        self.items = items
+        self.__items = items
 
         self.reads = defaultdict(lambda: defaultdict(int))
         for (site, item), count in reads.iteritems():
@@ -43,7 +42,7 @@ class SRA(object):
         possible = []
         for site, free in self.free.iteritems():
             fitting = []
-            for item in self.items:
+            for item in self.__items:
                 if self.size(item) < free and self.primary(item) != site:
                     fitting.append(item)
 
@@ -63,7 +62,7 @@ class SRA(object):
             best_item = None
 
             for item in set(fitting):
-                size = self.items[item].size
+                size = self.__items[item].size
                 free = self.free[site]
                 b = self.benefit(site, item)
 
@@ -75,7 +74,7 @@ class SRA(object):
 
             if best_item:
                 fitting.remove(best_item)
-                size = self.items[best_item].size
+                size = self.__items[best_item].size
                 self.free[site] -= size
                 self.replicas[best_item].add(site)
 
@@ -90,17 +89,17 @@ class SRA(object):
         return self.replicas
 
     def primary(self, item):
-        return self.items[item].primary
+        return self.__items[item].primary
 
     def size(self, item):
-        return self.items[item].size
+        return self.__items[item].size
 
     def benefit(self, site, item):
         size = self.size(item)
         closest = self.closest[item][site]
         read_cost = size * self.cost[site, closest] * self.reads[site][item]
 
-        primary = self.items[item].primary
+        primary = self.__items[item].primary
         write_count = self.writes[item][site]
 
         write_cost = 0
@@ -117,19 +116,19 @@ class SRA(object):
 class SRAOpt(object):
     def __init__(self, sites, cost, items, reads, writes):
         super(SRAOpt, self).__init__()
-        self.sites = tuple(sites)
-        self.items = tuple(items)
+        self.__sites = tuple(sites)
+        self.__items = tuple(items)
 
         self.site_names = tuple(sites)
         self.item_names = tuple(items)
 
-        self.size = tuple(items[i].size for i in self.items)
-        self.free = np.fromiter((sites[s] for s in self.sites), dtype=np.int32)
+        self.size = tuple(items[i].size for i in self.__items)
+        self.free = np.fromiter((sites[s] for s in self.__sites), dtype=np.int32)
 
-        site_lookup = {site: n for n, site in enumerate(self.sites)}
-        item_lookup = {item: n for n, item in enumerate(self.items)}
+        site_lookup = {site: n for n, site in enumerate(self.__sites)}
+        item_lookup = {item: n for n, item in enumerate(self.__items)}
 
-        self.primary = tuple(site_lookup[items[i].primary] for i in self.items)
+        self.primary = tuple(site_lookup[items[i].primary] for i in self.__items)
 
         n = len(sites)
         m = len(items)
@@ -137,7 +136,7 @@ class SRAOpt(object):
         self.cost = np.empty(shape=(n, n), dtype=np.int32)
         for i in xrange(n):
             for j in xrange(n):
-                u, v = self.sites[i], self.sites[j]
+                u, v = self.__sites[i], self.__sites[j]
                 self.cost[i, j] = cost[u, v]
 
         self.reads = np.empty(shape=(n, m), dtype=np.int32)
@@ -145,8 +144,8 @@ class SRAOpt(object):
 
         for i in xrange(n):
             for j in xrange(m):
-                site = self.sites[i]
-                item = self.items[j]
+                site = self.__sites[i]
+                item = self.__items[j]
                 self.reads[i, j] = reads[site, item]
                 self.writes[i, j] = writes[site, item]
 
@@ -229,10 +228,10 @@ class SRAOpt(object):
         return replication
 
     def item_indices(self):
-        return xrange(len(self.items))
+        return xrange(len(self.__items))
 
     def site_indices(self):
-        return xrange(len(self.sites))
+        return xrange(len(self.__sites))
 
     def write_cost(self, site, item):
         size = self.size[item]

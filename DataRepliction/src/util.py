@@ -2,6 +2,18 @@
 from time import time
 
 
+class IndexableView(object):
+    def __init__(self, method):
+        self.method = method
+
+    def __getitem__(self, *args):
+        return self.method(*args)
+
+
+def index_map(seq):
+    return {item: idx for idx, item in enumerate(seq)}
+
+
 class Stopwatch(object):
 
     def __init__(self):

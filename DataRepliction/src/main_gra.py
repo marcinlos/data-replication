@@ -9,7 +9,6 @@ from random_data import randomLinks, randomSites, randomItems, randomTraffic
 from pyevolve import G2DBinaryString
 from pyevolve import GSimpleGA
 from pyevolve import Selectors
-from pyevolve import DBAdapters
 from pyevolve import Consts
 
 from SRA import SRA
@@ -52,13 +51,9 @@ if __name__ == '__main__':
 
     ga.setMinimax(Consts.minimaxType['minimize'])
     ga.selector.set(Selectors.GRouletteWheel)
-    ga.setGenerations(10)
-    ga.terminationCriteria.set(GSimpleGA.ConvergenceCriteria)
+    ga.setGenerations(20)
 
-    sqlite_adapter = DBAdapters.DBSQLite(identify='ex1', resetDB=True)
-    ga.setDBAdapter(sqlite_adapter)
-
-    ga.evolve(freq_stats=20)
+    ga.evolve(freq_stats=1)
 
     best = ga.bestIndividual()
     replicas = gra.genomeToReplicas(best)
