@@ -10,7 +10,9 @@ from pyevolve import G2DBinaryString
 from pyevolve import GSimpleGA
 from pyevolve import Selectors
 from pyevolve import DBAdapters
+from pyevolve import Consts
 
+from SRA import SRA
 from GRA import GRA
 
 
@@ -44,19 +46,31 @@ if __name__ == '__main__':
     genome = G2DBinaryString.G2DBinaryString(N, M)
     genome.evaluator.set(gra.eval)
     genome.initializator.set(gra.initialize)
+    genome.mutator.set(gra.mutate)
 
     ga = GSimpleGA.GSimpleGA(genome)
 
+    ga.setMinimax(Consts.minimaxType['minimize'])
     ga.selector.set(Selectors.GRouletteWheel)
-    ga.setGenerations(500)
+    ga.setGenerations(10)
     ga.terminationCriteria.set(GSimpleGA.ConvergenceCriteria)
 
-    sqlite_adapter = DBAdapters.DBSQLite(identify="ex1", resetDB=True)
+    sqlite_adapter = DBAdapters.DBSQLite(identify='ex1', resetDB=True)
     ga.setDBAdapter(sqlite_adapter)
 
     ga.evolve(freq_stats=20)
 
-    print ga.bestIndividual()
+    best = ga.bestIndividual()
+    replicas = gra.genomeToReplicas(best)
+    closest = closestReplicas(sites, items, replicas, cost)
+    final_cost = totalCost(reads, writes, closest, cost, items, replicas)
+    print 'Final cost (GRA):', final_cost
+
+    sra = SRA(sites, cost, items, reads, writes)
+    replicas = sra.run()
+    closest = closestReplicas(sites, items, replicas, cost)
+    final_cost = totalCost(reads, writes, closest, cost, items, replicas)
+    print 'Final cost (SRA):', final_cost
 
 
 

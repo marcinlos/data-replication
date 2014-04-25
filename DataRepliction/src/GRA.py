@@ -4,6 +4,23 @@ from replication import totalCost
 from replication import checkConstraints
 from replication import closestReplicas
 from _collections import defaultdict
+from random import randint
+from SRA import SRA
+from pyevolve import Util
+
+
+class RandomizedSRA(SRA):
+
+    def __init__(self, *args, **kwargs):
+        super(RandomizedSRA, self).__init__(*args, **kwargs)
+
+    def siteIterator(self, possible):
+        def randSeq():
+            while True:
+                n = len(possible)
+                idx = randint(0, n - 1)
+                yield idx, possible[idx]
+        return randSeq()
 
 
 class GRA(object):
@@ -19,13 +36,17 @@ class GRA(object):
 
         self.site_lookup = {name: i for i, name in enumerate(sites)}
         self.item_lookup = {name: i for i, name in enumerate(items)}
-
+        
+        self.mutation_prob = 0.1
+    
     def eval(self, genome):
         replicas = self.genomeToReplicas(genome)
         return self.totalCost(replicas)
 
     def initialize(self, genome, **kwargs):
-        replicas = minimalReplication(self.items)
+        sra = RandomizedSRA(self.sites, self.cost, self.items, self.reads,
+            self.writes)
+        replicas = sra.run()
         self.replicasToGenome(replicas, genome)
 
     def genomeToReplicas(self, genome):
@@ -44,9 +65,29 @@ class GRA(object):
             self.items, replicas)
 
     def replicasToGenome(self, replicas, genome):
-        genome.clearString()
+        self.zeroGenome(genome)
+
         for item, sites in replicas.iteritems():
             i = self.item_lookup[item]
             for site in sites:
                 s = self.site_lookup[site]
                 genome.setItem(s, i, 1)
+
+    def zeroGenome(self, genome):
+        for i in xrange(genome.getHeight()):
+            for j in xrange(genome.getWidth()):
+                genome.setItem(i, j, 0)
+
+    def mutate(self, genome, **kwargs):
+        p = self.mutation_prob
+        height, width = genome.getSize()
+        mutations = 0
+
+        for i in xrange(height):
+            for j in xrange(width):
+                if Util.randomFlipCoin(p):
+                    prev = genome[i][j]
+                    genome.setItem(i, j, 1 - prev)
+                    mutations += 1
+        return mutations
+

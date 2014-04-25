@@ -39,7 +39,7 @@ class SRA(object):
         for name, item in items.iteritems():
             self.closest[name] = {site: item.primary for site in sites}
 
-    def run(self):
+    def possibleReplicas(self):
         possible = []
         for site, free in self.free.iteritems():
             fitting = []
@@ -48,8 +48,14 @@ class SRA(object):
                     fitting.append(item)
 
             possible.append((site, fitting))
+        return possible
 
-        site_iter = roundRobin(possible)
+    def siteIterator(self, possible):
+        return roundRobin(possible)
+
+    def run(self):
+        possible = self.possibleReplicas()
+        site_iter = self.siteIterator(possible)
 
         while possible:
             idx, (site, fitting) = site_iter.next()
