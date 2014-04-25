@@ -6,7 +6,7 @@ from replication import costMatrix, minimalReplication, totalCost,\
 from replication import closestReplicas
 
 from random_data import randomLinks, randomSites, randomItems, randomTraffic
-from SRA import SRA, SRAOpt
+from SRA import SRA
 
 
 if __name__ == '__main__':
@@ -32,34 +32,28 @@ if __name__ == '__main__':
 
     baseCost = totalCost(reads, writes, closest, cost, items, minimal)
 
-    for name, Algorithm in [('simple', SRA), ('numpy', SRAOpt)]:
-        t.start('constructor {}'.format(name))
-        sra = Algorithm(sites, cost, items, reads, writes)
-        t.stop('constructor {}'.format(name))
+    t.start('constructor')
+    sra = SRA(sites, cost, items, reads, writes)
+    t.stop('constructor')
 
-        t.start('run {}'.format(name))
-        replicas = sra.run()
-        t.stop('run {}'.format(name))
+    t.start('run')
+    replicas = sra.run()
+    t.stop('run')
 
-        checkConstraints(replicas, items, sites)
-        closest = closestReplicas(sites, items, replicas, cost)
-        finalCost = totalCost(reads, writes, closest, cost, items, replicas)
+    checkConstraints(replicas, items, sites)
+    closest = closestReplicas(sites, items, replicas, cost)
+    finalCost = totalCost(reads, writes, closest, cost, items, replicas)
 
-        change = 1 - float(finalCost) / baseCost
-        print name
-        print 'Initial cost:    ', baseCost
-        print 'Final cost:      ', finalCost
-        print 'Improvement:      {:.2%}'.format(change)
-        print
+    change = 1 - float(finalCost) / baseCost
+    print 'Initial cost:    ', baseCost
+    print 'Final cost:      ', finalCost
+    print 'Improvement:      {:.2%}'.format(change)
+    print
 
     print 'Data creation: {}s'.format(t['data creation'])
     print
 
-    print 'Pretty:'
-    print '  Preprocessing: {}s'.format(t['constructor simple'])
-    print '  Computation:   {}s'.format(t['run simple'])
+    print 'Results:'
+    print '  Preprocessing: {:.5}s'.format(t['constructor'])
+    print '  Computation:   {:.5}s'.format(t['run'])
     print
-
-    print 'Numpy:'
-    print '  Preprocessing: {}s'.format(t['constructor numpy'])
-    print '  Computation:   {}s'.format(t['run numpy'])
