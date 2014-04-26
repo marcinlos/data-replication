@@ -5,11 +5,70 @@ from SRA import SRA
 from problem import Replication
 from pyevolve import Util
 from pyevolve import GenomeBase
-from replication import checkConstraints
+from replication import checkConstraints, minimalReplication
 
 
 class ConstraintViolation(Exception):
     pass
+
+
+class ReplicationBuilder(object):
+
+    def __init__(self, data, replicas=None):
+        self.data = data
+        self.__replicas = defaultdict(set)
+        self.free = dict(data.capacity)
+
+        if replicas is None:
+            replicas = minimalReplication(self.data.item_info)
+
+        for item, sites in replicas:
+            for site in sites:
+                self.add(item, site)
+
+    def add(self, item, site):
+        free = self.free[site]
+        size = self.data.size[item]
+        if free < size:
+            raise ConstraintViolation('Site overloaded')
+
+        self.replicas[item].add(site)
+        self.free[site] -= size
+
+    def remove(self, item, site):
+        if self.data.primary[item] == site:
+            raise ConstraintViolation('Primary site constraint violation')
+        size = self.data.size[item]
+        self.free[site] += size
+        self.replicas[item].remove(site)
+
+    def clear(self):
+        self.replicas.clear()
+        self.free = dict(self.data.capacity)
+
+
+class SiteData(object):
+    def __init__(self, site, data):
+        self.site = site
+        self.data = data
+        self.capacity = data.capacity[site]
+        self.free = self.capacity
+        self.replicas = [0] * data.nitems
+
+    def __getitem__(self, item):
+        return self.replicas[item]
+
+    def add(self, item):
+        size = self.data.size[item]
+        if self.free < size:
+            raise ConstraintViolation('Site overloaded')
+        self.free -= size
+        self.replicas[item] = 1
+
+    def remove(self, item):
+        size = self.data.size[item]
+        self.free += size
+        self.replicas[item] = 0
 
 
 class ReplicationGenome(GenomeBase.GenomeBase, object):
@@ -39,9 +98,7 @@ class ReplicationGenome(GenomeBase.GenomeBase, object):
     def copy(self, g):
         GenomeBase.GenomeBase.copy(self, g)
         g.data = self.data
-        #g.__replicas = defaultdict(set, self.__replicas)
         g.replicas = self.replicas
-        #g.free = dict(self.free)
 
     def clone(self):
         other = ReplicationGenome(self.data)
@@ -76,6 +133,59 @@ class ReplicationGenome(GenomeBase.GenomeBase, object):
     def clear(self):
         self.replicas.clear()
         self.free = dict(self.data.capacity)
+
+    @staticmethod
+    def crossover(a, b):
+        ga = defaultdict(set)
+        for item, sites in a.replicas.iteritems():
+            for site in sites:
+                ga[site].add(item)
+        gb = defaultdict(set)
+        for item, sites in b.replicas.iteritems():
+            for site in sites:
+                gb[site].add(item)
+
+        data = a.data
+        items = a.data.items
+        sites = a.data.sites
+        nitems = len(items)
+        for site in sites:
+            p, q = randint(0, nitems), randint(0, nitems)
+            if p >= q:
+                p, q = q, p
+            free_a = a.free[site]
+            free_b = b.free[site]
+
+            items_in_range = [items[i] for i in xrange(p, q)]
+            items_a = [item for item in items_in_range if item in ga[site]]
+            items_b = [item for item in items_in_range if item in gb[site]]
+            size_a = sum(data.size[item] for item in items_a)
+            size_b = sum(data.size[item] for item in items_b)
+            diff = size_a - size_b
+
+            if free_a + diff >= 0 and free_b - diff >= 0:
+                ga[site].difference_update(items_a)
+                ga[site].update(items_b)
+                gb[site].difference_update(items_b)
+                gb[site].update(items_a)
+            else:
+                ga[site], gb[site] = gb[site], ga[site]
+
+        replicas_a = defaultdict(set)
+        for site, items in ga.iteritems():
+            for item in items:
+                replicas_a[item].add(site)
+
+        replicas_b = defaultdict(set)
+        for site, items in gb.iteritems():
+            for item in items:
+                replicas_b[item].add(site)
+
+        new_a = a.clone()
+        new_b = b.clone()
+        new_a.replicas = replicas_a
+        new_b.replicas = replicas_b
+        return (new_a, new_b)
 
     def __usage(self):
         used = defaultdict(int)
@@ -114,7 +224,6 @@ class GRA(object):
 
     def __init__(self, problem):
         self.data = problem
-        self.mutation_prob = 0.1
 
     def eval(self, genome):
         return self.totalCost(genome.replicas)
@@ -129,17 +238,13 @@ class GRA(object):
         return rep.totalCost()
 
     def crossover(self, genome, **args):
-        sister = None
-        brother = None
-        mom = args["mom"]
-        dad = args["dad"]
+        mom = args['mom']
+        dad = args['dad']
 
-        brother = dad.clone()
-        sister = mom.clone()
-        return (sister, brother)
+        return ReplicationGenome.crossover(mom, dad)
 
     def mutate(self, genome, **kwargs):
-        p = self.mutation_prob
+        p = kwargs['pmut']
         mutations = 0
 
         for site in self.data.sites:
