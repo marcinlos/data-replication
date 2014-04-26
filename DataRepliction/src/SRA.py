@@ -26,9 +26,9 @@ class SRA(object):
             self.writes[item][site] = count
 
         self.free = dict(problem.capacity)
-        self.replicas = minimalReplication(problem.item_info)
+        self.__replicas = minimalReplication(problem.item_info)
 
-        for item, replicationSites in self.replicas.iteritems():
+        for item, replicationSites in self.__replicas.iteritems():
             for s in replicationSites:
                 self.free[s] -= problem.size[item]
 
@@ -74,7 +74,7 @@ class SRA(object):
                 fitting.remove(best_item)
                 size = self.items[best_item].size
                 self.free[site] -= size
-                self.replicas[best_item].add(site)
+                self.__replicas[best_item].add(site)
 
                 for s in (s for s, _ in possible):
                     prev = self.closest[best_item][s]
@@ -84,7 +84,7 @@ class SRA(object):
             if not fitting:
                 del possible[idx]
 
-        return self.replicas
+        return self.__replicas
 
     def primary(self, item):
         return self.items[item].primary
@@ -101,7 +101,7 @@ class SRA(object):
         write_count = self.writes[item][site]
 
         write_cost = 0
-        for replica in self.replicas[item] | {site}:
+        for replica in self.__replicas[item] | {site}:
             write_cost += write_count * size * self.cost[replica, primary]
 
         update_cost = 0

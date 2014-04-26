@@ -2,27 +2,27 @@
 from replication import costMatrix
 from random_data import randomLinks, randomSites, randomItems, randomTraffic
 
-from pyevolve import G2DBinaryString
 from pyevolve import GSimpleGA
 from pyevolve import Selectors
 from pyevolve import Consts
 
 from SRA import SRA
-from GRA import GRA
+from GRA import GRA, ReplicationGenome
 from problem import Problem, Replication
+from ui import printDetails
 
 
 if __name__ == '__main__':
 
-    N = 30
-    M = 100
+    N = 10
+    M = 40
 
-    sites = randomSites(N, min_capacity=2000)
+    sites = randomSites(N, min_capacity=100, max_capacity=300)
     links = randomLinks(sites, avg_degree=4)
     cost = costMatrix(sites, links)
     items = randomItems(M, sites, max_size=20)
 
-    rwRatio = 0.07
+    rwRatio = 0.01
     readCount = 100000
     writeCount = int(readCount * rwRatio)
 
@@ -37,10 +37,11 @@ if __name__ == '__main__':
 
     print 'Initial cost:', base_cost
 
-    genome = G2DBinaryString.G2DBinaryString(N, M)
+    genome = ReplicationGenome(problem)
     genome.evaluator.set(gra.eval)
     genome.initializator.set(gra.initialize)
     genome.mutator.set(gra.mutate)
+    genome.crossover.set(gra.crossover)
 
     ga = GSimpleGA.GSimpleGA(genome)
 
@@ -51,16 +52,17 @@ if __name__ == '__main__':
     ga.evolve(freq_stats=1)
 
     best = ga.bestIndividual()
-    replicas = gra.genomeToReplicas(best)
+    replicas = best.replicas
     solution = Replication(problem, replicas)
-    final_cost = solution.totalCost()
-    print 'Final cost (GRA):', final_cost
+
+    print 'GRA:'
+    printDetails(solution)
 
     sra = SRA(problem)
     replicas = sra.run()
     solution = Replication(problem, replicas)
-    final_cost = solution.totalCost()
-    print 'Final cost (SRA):', final_cost
+    print 'SRA:'
+    printDetails(solution)
 
 
 

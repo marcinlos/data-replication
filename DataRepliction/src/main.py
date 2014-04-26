@@ -20,7 +20,7 @@ if __name__ == '__main__':
     cost = costMatrix(sites, links)
     items = randomItems(100, sites, max_size=20)
 
-    rwRatio = 0.01
+    rwRatio = 0.00
     readCount = 100000
     writeCount = int(readCount * rwRatio)
 

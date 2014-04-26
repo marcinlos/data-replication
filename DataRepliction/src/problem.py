@@ -56,14 +56,18 @@ class Replication(object):
 
     def __init__(self, problem, replicas=None):
         self.data = problem
-        self.replicas = defaultdict(set)
+        #self.__replicas = defaultdict(set)
         #self.free = dict(problem.capacity)
 
         if not replicas:
             replicas = minimalReplication(problem.item_info)
 
-        self.replicas = replicas
+        self.__replicas = replicas
         self.closest = self.__findClosestReplicas()
+
+    @property
+    def replicas(self):
+        return self.__replicas
 
     def __findClosestReplicas(self):
         closest = {}
@@ -73,7 +77,7 @@ class Replication(object):
             for item in self.data.items:
                 closest[site, item] = p.primary[item]
 
-                for replica in self.replicas[item]:
+                for replica in self.__replicas[item]:
                     best = closest[site, item]
                     if p.cost[site, replica] < p.cost[site, best]:
                         closest[site, item] = replica
@@ -91,7 +95,7 @@ class Replication(object):
             primary = p.primary[item]
             size = p.size[item]
 
-            for replica in self.replicas[item] | {site}:
+            for replica in self.__replicas[item] | {site}:
                 total += count * size * p.cost[replica, primary]
 
         return total

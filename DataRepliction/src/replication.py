@@ -52,7 +52,9 @@ def checkConstraints(replicas, items, capacity):
         for site in replicas[item]:
             used[site] += size
             if used[site] > capacity[site]:
-                raise Exception('Site {} overloaded'.format(site))
+                fmt = 'Site {} overloaded - max {}, total {}'
+                msg = fmt.format(site, capacity[site], used[site])
+                raise Exception(msg)
 
 
 def closestReplicas(sites, items, replicas, cost):
