@@ -1,9 +1,7 @@
 
 from util import Stopwatch
 
-from replication import costMatrix, minimalReplication, totalCost,\
-    checkConstraints
-from replication import closestReplicas
+from replication import costMatrix
 
 from random_data import randomLinks, randomSites, randomItems, randomTraffic
 
@@ -20,7 +18,7 @@ if __name__ == '__main__':
     cost = costMatrix(sites, links)
     items = randomItems(100, sites, max_size=20)
 
-    rwRatio = 0.00
+    rwRatio = 0.02
     readCount = 100000
     writeCount = int(readCount * rwRatio)
 
@@ -42,8 +40,8 @@ if __name__ == '__main__':
     replicas = sra.run()
     t.stop('run')
 
-    checkConstraints(replicas, items, sites)
     solution = Replication(problem, replicas)
+    solution.verify()
     final_cost = solution.totalCost()
 
     change = 1 - float(final_cost) / base_cost

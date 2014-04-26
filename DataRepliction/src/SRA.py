@@ -32,9 +32,10 @@ class SRA(object):
             for s in replicationSites:
                 self.free[s] -= problem.size[item]
 
-        self.closest = {}
-        for name, item in problem.item_info.iteritems():
-            self.closest[name] = {site: item.primary for site in problem.sites}
+        self.closest = {
+            name: {site: item.primary for site in problem.sites}
+            for name, item in problem.item_info.iteritems()
+        }
 
     def possibleReplicas(self):
         possible = []

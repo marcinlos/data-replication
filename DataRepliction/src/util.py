@@ -2,12 +2,20 @@
 from time import time
 
 
-class IndexableView(object):
-    def __init__(self, method):
+class DictView(object):
+    def __init__(self, source, method):
+        self.source = source
         self.method = method
 
     def __getitem__(self, *args):
-        return self.method(*args)
+        item = self.source.__getitem__(*args)
+        return self.method(item)
+
+    def __iter__(self):
+        return iter(self.source)
+
+    def __len__(self):
+        return len(self.source)
 
 
 def index_map(seq):

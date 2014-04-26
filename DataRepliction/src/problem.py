@@ -1,6 +1,7 @@
 
-from util import index_map, IndexableView
+from util import DictView
 from replication import minimalReplication
+from operator import attrgetter
 from _collections import defaultdict
 
 
@@ -17,11 +18,8 @@ class Problem(object):
         self.writes = writes
         self.cost = cost
 
-        self.site_idx = index_map(sites)
-        self.item_idx = index_map(items)
-
-        self.size_view = IndexableView(lambda i: self.item_info[i].size)
-        self.primary_view = IndexableView(lambda i: self.item_info[i].primary)
+        self.size_view = DictView(items, attrgetter('size'))
+        self.primary_view = DictView(items, attrgetter('primary'))
 
     @property
     def nsites(self):
@@ -43,21 +41,11 @@ class Problem(object):
     def primary(self):
         return self.primary_view
 
-    @property
-    def item_range(self):
-        return xrange(self.nitems)
-
-    @property
-    def site_range(self):
-        return xrange(self.nsites)
-
 
 class Replication(object):
 
     def __init__(self, problem, replicas=None):
         self.data = problem
-        #self.__replicas = defaultdict(set)
-        #self.free = dict(problem.capacity)
 
         if not replicas:
             replicas = minimalReplication(problem.item_info)
@@ -68,6 +56,29 @@ class Replication(object):
     @property
     def replicas(self):
         return self.__replicas
+
+    def verify(self):
+        used = defaultdict(int)
+        for item in self.data.items:
+            primary = self.data.primary[item]
+            size = self.data.size[item]
+            if not primary in self.replicas[item]:
+                self.__raisePrimaryCopyRemoved(item, primary)
+            for site in self.replicas[item]:
+                used[site] += size
+                if used[site] > self.data.capacity[site]:
+                    self.__raiseSiteOverloaded(site, used)
+
+    def __raisePrimaryCopyRemoved(self, item, primary):
+        fmt = 'Item {} removed fom primary site {}'
+        msg = fmt.format(item, primary)
+        raise Exception(msg)
+
+    def __raiseSiteOverloaded(self, site, used):
+        fmt = 'Site {} overloaded - max {}, total {}'
+        capacity = self.data.capacity[site]
+        msg = fmt.format(site, capacity, used[site])
+        raise Exception(msg)
 
     def __findClosestReplicas(self):
         closest = {}
@@ -95,16 +106,7 @@ class Replication(object):
             primary = p.primary[item]
             size = p.size[item]
 
-            for replica in self.__replicas[item] | {site}:
+            for replica in self.replicas[item] | {site}:
                 total += count * size * p.cost[replica, primary]
 
         return total
-        
-        
-        
-        
-        
-        
-        
-        
-        

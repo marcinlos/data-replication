@@ -1,5 +1,4 @@
 
-from replication import checkConstraints
 from problem import Replication
 
 
@@ -17,9 +16,8 @@ def printCostMatrix(sites, cost):
 
 def printDetails(replication):
     problem = replication.data
-    replicas = replication.replicas
 
-    checkConstraints(replicas, problem.item_info, problem.capacity)
+    replication.verify()
 
     minimal = Replication(problem)
     base_cost = minimal.totalCost()
