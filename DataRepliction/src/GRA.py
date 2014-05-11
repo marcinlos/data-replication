@@ -24,6 +24,12 @@ class ReplicationGenome(GenomeBase.GenomeBase, object):
             primary = self.data.primary[item]
             self.add(item, primary)
 
+    def setRules(self, rules):
+        self.evaluator.set(rules.eval)
+        self.initializator.set(rules.initialize)
+        self.mutator.set(rules.mutate)
+        self.crossover.set(rules.crossover)
+
     @property
     def replicas(self):
         return self.__replicas
@@ -93,10 +99,10 @@ class ReplicationGenome(GenomeBase.GenomeBase, object):
                 raise Exception('Inconsistency')
 
 
-class RandomizedSRA(SRA):
+class Initializer(SRA):
 
     def __init__(self, problem):
-        super(RandomizedSRA, self).__init__(problem)
+        super(Initializer, self).__init__(problem)
 
     def siteIterator(self, possible):
         def randSeq():
@@ -116,7 +122,7 @@ class GRA(object):
         return self.totalCost(genome.replicas)
 
     def initialize(self, genome, **kwargs):
-        sra = RandomizedSRA(self.data)
+        sra = Initializer(self.data)
         replicas = sra.run()
         genome.replicas = replicas
 

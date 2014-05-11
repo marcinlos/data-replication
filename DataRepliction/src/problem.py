@@ -110,3 +110,6 @@ class Replication(object):
                 total += count * size * p.cost[replica, primary]
 
         return total
+
+    def replicasCount(self):
+        return sum(len(sites) for sites in self.replicas.values())
