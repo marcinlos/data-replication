@@ -3,8 +3,6 @@ import random
 from replication import Item
 from _collections import defaultdict
 from collections import Counter
-from replication import costMatrix
-from problem import Problem
 
 
 def randIntGen(a, b):

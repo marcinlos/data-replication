@@ -11,23 +11,31 @@ from GRA import GRA, ReplicationGenome
 from problem import Problem, Replication
 from ui import printDetails
 
+import article_random_data as art
 
 if __name__ == '__main__':
 
-    N = 10
-    M = 40
+    N = 100
+    M = 150
 
-    sites = randomSites(N, min_capacity=100, max_capacity=300)
-    links = randomLinks(sites, avg_degree=4)
-    cost = costMatrix(sites, links)
-    items = randomItems(M, sites, max_size=20)
+#     sites = randomSites(N, min_capacity=100, max_capacity=300)
+#     links = randomLinks(sites, avg_degree=4)
+#     cost = costMatrix(sites, links)
+#     items = randomItems(M, sites, max_size=20)
+# 
+#     rwRatio = 0.05
+#     readCount = 100000
+#     writeCount = int(readCount * rwRatio)
+# 
+#     reads = randomTraffic(readCount, sites, items)
+#     writes = randomTraffic(writeCount, sites, items)
 
-    rwRatio = 0.05
-    readCount = 100000
-    writeCount = int(readCount * rwRatio)
+    site_names = art.randomSites(N)
+    items = art.randomItems(M, site_names)
+    sites = art.randomCapacities(site_names, items)
+    reads, writes = art.randomTraffic(sites, items, 0.05)
+    cost = art.randomNetwork(sites)
 
-    reads = randomTraffic(readCount, sites, items)
-    writes = randomTraffic(writeCount, sites, items)
     problem = Problem(sites, items, reads, writes, cost)
 
     gra = GRA(problem)
