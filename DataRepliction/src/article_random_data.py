@@ -95,12 +95,7 @@ def randomCapacities(sites, items, capacity_factor=0.15):
     capacity_factor: determines the capacities relative to sum of item sizes
     """
     total_obj_size = sum(item.size for item in items.values())
-    print 'Total size:', total_obj_size
 
-    b = capacity_factor * total_obj_size
-    c = int(b / 2)
-    print 'Min capacity:', c
-    print 'Max capacity:', 3 * c
     return {
         site: uniform(total_obj_size, capacity_factor)
         for site in sites

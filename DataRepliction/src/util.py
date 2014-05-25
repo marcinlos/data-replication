@@ -42,3 +42,7 @@ class Stopwatch(object):
 
     def __iter__(self):
         return iter(self.__time)
+
+    @property
+    def times(self):
+        return self.__time

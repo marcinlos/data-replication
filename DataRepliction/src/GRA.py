@@ -11,6 +11,10 @@ class ConstraintViolation(Exception):
     pass
 
 
+def dummy():
+    pass
+
+
 class ReplicationGenome(GenomeBase.GenomeBase, object):
 
     def __init__(self, problem):
@@ -29,6 +33,17 @@ class ReplicationGenome(GenomeBase.GenomeBase, object):
         self.initializator.set(rules.initialize)
         self.mutator.set(rules.mutate)
         self.crossover.set(rules.crossover)
+#         self.evaluator.set(proxy)
+
+    def clearRules(self):
+        """ Clears function slots, as a preparatory step for migration.
+        Associated migration adapter restores valid state.
+        Nasty workaround :(
+        """
+        self.evaluator.set(dummy)
+        self.initializator.set(dummy)
+        self.mutator.set(dummy)
+        self.crossover.set(dummy)
 
     @property
     def replicas(self):

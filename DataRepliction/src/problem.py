@@ -2,7 +2,7 @@
 from util import DictView
 from replication import minimalReplication
 from operator import attrgetter
-from _collections import defaultdict
+from collections import defaultdict
 
 
 class Problem(object):
@@ -10,7 +10,7 @@ class Problem(object):
     methods.
     '''
     def __init__(self, sites, items, reads, writes, cost):
-        self.__sites = sites
+        self.site_map = sites
         self.item_info = items
         self.sites = tuple(sites)
         self.items = tuple(items)
@@ -31,7 +31,7 @@ class Problem(object):
 
     @property
     def capacity(self):
-        return self.__sites
+        return self.site_map
 
     @property
     def size(self):
@@ -40,6 +40,25 @@ class Problem(object):
     @property
     def primary(self):
         return self.primary_view
+
+    def __getstate__(self):
+        return {
+            attr: getattr(self, attr)
+            for attr in (
+                'site_map', 'item_info', 'reads', 'writes', 'cost'
+            )
+        }
+
+    def __setstate__(self, d):
+        self.site_map = d['site_map']
+        self.sites = tuple(d['site_map'])
+        self.item_info = d['item_info']
+        self.items = tuple(d['item_info'])
+        self.reads = d['reads']
+        self.writes = d['writes']
+        self.cost = d['cost']
+        self.size_view = DictView(self.item_info, attrgetter('size'))
+        self.primary_view = DictView(self.item_info, attrgetter('primary'))
 
 
 class Replication(object):
