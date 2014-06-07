@@ -74,10 +74,56 @@ Nieco bardziej szczegółowy opis, wraz z wzorami na całkowity koszt znaleźć 
 \section{Istniejące rozwiązania}
 
 \section{Rozwiązanie bazowe}
+Jako punkt wyjściowy przyjęliśmy rozwiązanie zaproponowane w \cite{Ahmad}.
 
-\section{Wprowadzone zmiany}
+\section{Narzędzia}
+Do realizacji implementacyjnych aspektów projektu wykorzystaliśmy język Python i bibliotekę
+PyEvolve \cite{pyevolve}, dostarczającą różnych komponentów (np. strategie selekcji) pozwalających
+budować algorytmy genetyczne. Do implementacji rozproszonej użyte zostało MPI, za pośrednictwem
+Pythonowych bindingów udostępnianych przez bibliotekę mpi4py \cite{mpi4py}.
+
+\section{Przebieg prac}
+Pierwszym celem po dokładnym zapoznaniem się z artykułem, na którym bazuje projekt, było odtworzenie
+zaprezentowanych w nim wyników. W tym celu zaimplementowany został dokładnie przedstawiony w nim
+algorytm. Początkowo planowaliśmy użyć nieco innego generatora danych do testów, takiego, który w
+naszym odczuciu mógłby lepiej odwzorowywać własności instancji problemu, które występować mogą w 
+praktyce. 
+
 
 \section{Podsumowanie}
+
+\section{Możliwe kierunki rozwoju}
+
+Jakkolwiek algorytm wyspowy nie przyniósł żadnej obserwowalnej poprawy jakości otrzymywanych rozwiązań,
+w pewnym stopniu może być to spowodowane małym zróżnicowaniem populacji na poszczególnych wyspach.
+Populacje wybierane są niezależnie przy użyciu tego samego schematu, i są raczej na tyle duże (80
+osobników), że trudno się spodziewać, by istotnie się od siebie różniły. Niewykluczone, że stworzenie
+populacji bardziej zróżnicowanych (poprzez modyfikację rozkładów, z których są losowane --tj. przez
+użycie różnych sposobów ich inicjalizowania) przyniosłoby lepszy efekt.
+
+Jednym z pomysłów, które ostatecznie nie zostały wprowadzone w życie, była relaksacja operacji
+genetycznych (mutacji i krzyżowania), polegająca na tym, by wymuszanie poprawności rozwiązań niejako
+przenieść do etapu ewaluacji -- dopuszczać wszystkie stworzone osobniki, jednak stosować kary przy
+ewaluacji, tak, by osobnikami o największym fitnessie były osobniki z poprawnym genotypem, jednak by
+zwiększyć ,,mobilność'' populacji -- umożliwić zmiany genotypu, które bez relaksacji nie byłyby 
+możliwe, i tym samym być może pozwolić na odkrycie trudnych do znalezienia minimów.
+
+Otwarta pozostaje kwestia znalezienia lepszych operatorów mutacji i krzyżowania, bardziej dostosowanych
+do rozpatrywanej przestrzeni stanów. Był to jeden z pierwszych pomysłów, jednak nie osiągnęliśmy w tym
+kierunku żadnych postępów. Znalezienie sensownych operatorów wewnętrznych (nie wychodzących poza --
+dość nieregularną -- przestrzeń stanów) pozwoliłoby uprościć algorytm, a ze względu na pewną 
+,,kompatybilność'' z przestrzenią stanów być może także polepszyć znajdowane przez ich użycie 
+rozwiązania. Wydaje się to być jednak zadanie stosunkowo trudne, i trudno na chwilę obecną powiedzieć,
+jakiego rodzaju operacji można by szukać.
+
+Przemyśleć należałoby kwestię generowania danych testowych. Nasze początkowe próby przeprowadzane
+były na danych generowanych inaczej, niż w artykule, jednak wróciliśmy do niego by odtworzyć wyniki
+i przy nim pozostaliśmy. Nie jest on jednak w naszym odczuciu idealny. W szczególności obiekcje 
+budzić może topologię połączeń -- w artykule bazowym odległości \(C(i,j)\) pomiędzy poszczególnymi
+hostami są losowane z rozkładem jednostajnym ze zbioru \(\{1,\ldots,10\}\). Najbardziej oczywistym
+problemem zdaje się być pogwałcenie nierówności trójkąta -- \(C\) nie jest metryką. Trudno powiedzieć,
+w jaki sposób wpływa to na używany algorytm, jednak wydaje się prawdopodobnym, że mogą istnieć jakieś
+zmiany/ulepszenia, dla których jest to istotne. 
 
 \begin{thebibliography}{}
 
@@ -85,6 +131,14 @@ Nieco bardziej szczegółowy opis, wraz z wzorami na całkowity koszt znaleźć 
   T. Loukopoulos I. Ahmad.
   \emph{Static and Adaptive Data Replication Algorithms for Fast Information Access in 
     Large Distributed Systems}
+
+  \bibitem{pyevolve}
+  Biblioteka PyEvolve,
+  \url{http://pyevolve.sourceforge.net/0_6rc1/}
+
+  \bibitem{mpi4py}
+  Biblioteka mpi4py,
+  \url{http://mpi4py.scipy.org/}
 
 \end{thebibliography}
 
