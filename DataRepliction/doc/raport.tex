@@ -160,15 +160,31 @@ poprawy w otrzymanych rozwiązaniach.
 
 \section{Podsumowanie}
 
+Zastosowanie algorytmu wielopulacyjnego opartego na modelu wyspowym nie przyniosło żadnych widocznych
+korzyści. Istnieje kilka możliwych przyczyn takiego stanu rzeczy. Po pierwsze, trudno powiedzieć, na
+ile znajdowane rozwiązania dalekie są od rozwiązania optymalnego -- przy niewielkiej ilości operacji
+zapisu algorytm obniża koszt sumaryczny o ponad połowę, niewykluczone, że rozwiązanie optymalne nie
+jest znacząco od niego lepsze. Przemawia za tym także fakt, że wyniki z 10 pokoleń wersji podstawowej
+i 20 pokoleń wersji wyspowej nie różnią się mimo dwukrotnego wydłużenia czasu ewolucji każdej z
+populacji.
+
+Inną możliwą przyczyną jest niewielkie zróżnicowanie populacji na poszczególnych wyspach. Populacje
+wybierane są niezależnie przy użyciu tego samego schematu, i są raczej na tyle duże (80 osobników),
+że trudno się spodziewać, by istotnie się od siebie różniły. Stąd, jedyną w zasadzie korzyścią z modelu
+wyspowego jest zrównoleglenie obliczeń -- w pewnym sensie uruchamiamy (prawie) ten sam algorytm
+na wielu maszynach, dzięki czemu mamy szansę znaleźć lepsze rozwiązanie. Nie sposób jednak oczekiwać
+jakichś spektakularnych różnic.
+
 
 \section{Możliwe kierunki rozwoju}
 
+W trakcie realizacji projektu nie wszystkie pomysły zrodzone w czasie dyskusji i przemyśleń zostały
+zrealizowane. Najistotniejsze kwestie są omówione w kolejnych akapitach.
+
 Jakkolwiek algorytm wyspowy nie przyniósł żadnej obserwowalnej poprawy jakości otrzymywanych rozwiązań,
 w pewnym stopniu może być to spowodowane małym zróżnicowaniem populacji na poszczególnych wyspach.
-Populacje wybierane są niezależnie przy użyciu tego samego schematu, i są raczej na tyle duże (80
-osobników), że trudno się spodziewać, by istotnie się od siebie różniły. Niewykluczone, że stworzenie
-populacji bardziej zróżnicowanych (poprzez modyfikację rozkładów, z których są losowane --tj. przez
-użycie różnych sposobów ich inicjalizowania) przyniosłoby lepszy efekt.
+Niewykluczone, że stworzenie populacji bardziej zróżnicowanych (poprzez modyfikację rozkładów, z których
+są losowane --tj. przez użycie różnych sposobów ich inicjalizowania) przyniosłoby lepszy efekt.
 
 Jednym z pomysłów, które ostatecznie nie zostały wprowadzone w życie, była relaksacja operacji
 genetycznych (mutacji i krzyżowania), polegająca na tym, by wymuszanie poprawności rozwiązań niejako
