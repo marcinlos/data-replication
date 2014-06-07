@@ -85,12 +85,81 @@ Pythonowych bindingów udostępnianych przez bibliotekę mpi4py \cite{mpi4py}.
 \section{Przebieg prac}
 Pierwszym celem po dokładnym zapoznaniem się z artykułem, na którym bazuje projekt, było odtworzenie
 zaprezentowanych w nim wyników. W tym celu zaimplementowany został dokładnie przedstawiony w nim
-algorytm. Początkowo planowaliśmy użyć nieco innego generatora danych do testów, takiego, który w
-naszym odczuciu mógłby lepiej odwzorowywać własności instancji problemu, które występować mogą w 
-praktyce. 
+algorytm (zarówno deterministyczny zachłanny -- SRA -- jak i główny -- GRA). Początkowo planowaliśmy
+użyć nieco innego generatora danych do testów, takiego, który w naszym odczuciu mógłby lepiej
+odwzorowywać własności instancji problemu, które występować mogą w praktyce. Dobranie jednak parametrów
+tak, by zaobserwować wyniki podobne do tych przedstawionych w artykule bazowym okazało się trudne,
+w związku z czym odtworzyliśmy wiernie sposób generacji danych w nim opisany. Po tym zabiegu
+udało nam się odtworzyć dość dobrze oryginalne wyniki. Poniższe wykresy przedstawiają kolejno: ilość 
+stworzonych replik (średnia ilość replik na obiekt), oraz zysk (jaki ułamek kosztu całkowitego
+pozwoliło zaoszczędzić stworzenie replik) przy stałej ilości obiektów (150), i zmiennej ilości
+hostów. Są analogiczne do tych umieszczonych w artykule bazowym, brak jednak wykresu obrazującego
+zysk przy stałej ilości hostów i zmiennej ilości obiektów, ze względu na bardzo duży czas obliczeń
+(wada języka Python). Algorytm genetyczny skonfigurowany był na stworzenie 10 pokoleń.
 
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth} 
+        \includegraphics[width=\textwidth]{plots/replicas}
+        \caption{ilość stworzonych replik}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{plots/saves}
+        \caption{skalowane}
+    \end{subfigure}
+
+    \caption{Wyniki dla algorytmu z artykułu}
+    \label{plot:original}
+\end{figure}
+
+Następnie przystąpiliśmy do stworzenia wielopopulacyjnej wersji algorytmu opartej na modelu wyspowym.
+Ze względu na stosunkowo duże czasy obliczeń, by w rozsądnym czasie uzyskać wyniki dla odpowiednio
+dużej liczby wysp, zdecydowaliśmy na zaimplementowanie algorytmu w wersji rozproszonej. Używany przez
+nas framework PyEvolve posiada wbudowaną obsługę wielopopulacyjności i migracji osobników pomiędzy
+populacjami, opartą na MPI, jednak na chwilę obecną zdaje się być dość mało dojrzała, i niezbyt dobrze
+przetestowana -- doprowadzenie naszej implementacji do działania wymagało pewnej ingerencji w 
+odpowiadające za to mechanizmy platformy. 
+
+Testy wersji wielopopulacyjnej przeprowadzone zostały na komputerze Zeus, z użyciem 12 rdzeni (12 
+populacji, po jednej na instancję programu), zasymulowane zostało 20 pokoleń.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth} 
+        \includegraphics[width=\textwidth]{plots/replicas_isl}
+        \caption{ilość stworzonych replik}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{plots/saves_isl}
+        \caption{skalowane}
+    \end{subfigure}
+
+    \caption{Wyniki dla algorytmu wyspowego}
+    \label{plot:original}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth} 
+        \includegraphics[width=\textwidth]{plots/time_sra_isl}
+        \caption{ilość stworzonych replik}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \includegraphics[width=\textwidth]{plots/time_gra_isl}
+        \caption{skalowane}
+    \end{subfigure}
+
+    \caption{Czasy działania algorytmu wyspowego}
+    \label{plot:original}
+\end{figure}
+
+Jak widać na powyższych wykresach, zastosowanie algorytmu wielopopulacyjnego nie przyniosło zauważalnej
+poprawy w otrzymanych rozwiązaniach.
+
+[coś o próbach redukcji do ILP]
 
 \section{Podsumowanie}
+
 
 \section{Możliwe kierunki rozwoju}
 
