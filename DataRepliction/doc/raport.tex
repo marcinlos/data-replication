@@ -74,7 +74,32 @@ Nieco bardziej szczegółowy opis, wraz z wzorami na całkowity koszt znaleźć 
 \section{Istniejące rozwiązania}
 
 \section{Rozwiązanie bazowe}
-Jako punkt wyjściowy przyjęliśmy rozwiązanie zaproponowane w \cite{Ahmad}.
+Jako punkt wyjściowy przyjęliśmy rozwiązanie zaproponowane w \cite{Ahmad}. Po szczegółowy jego opis
+odsyłamy do samej pracy, ta sekcja zawiera krótkie objaśnienie jego działania i używanych pojęć.
+
+Algorytm składa się z dwóch głównych części -- algorytmu zachłannego (\texttt{Simple Replication 
+Algorithm}), używanego do tworzenia populacji początkowej, oraz algorytmu genetycznego (GRA).
+
+Działanie SRA opiera się o ,,korzyść z replikacji'' (\texttt{replication benefit}), stanowiącego
+dla każdej party \((\textrm{obiekt}, \textrm{host})\) miarę ,,lokalnego zysku'' z replikacji tego
+obiektu na tym hoście (stosunek zysku -- jak zmieni się koszt indukowany przez operacje 
+\textbf{tego hosta} na tym obiekcie -- do wielkości obiektu, tj. zysk na jednostkę wielkości).
+Kolejno dla wszystkich hostów wybierany jest obiekt o największym takim relatywnym zysku, i dodawana
+jest do hosta jego replika, dopóki nie skończy się miejsce na hostach, bądź możliwości replikacji
+z dodatnim zyskiem. Elementem losowym jest kolejność rozważania hostów, dzięki temu algorytm
+nie jest całkiem deterministyczny, i może zostać użyty do wygenerowania populacji początkowej.
+
+Algorytm genetyczny tworzy początkową populację przy pomocy SRA, a następnie symuluje jej ewolucję.
+Zawiera zarówno mutację, jak i krzyżowanie. Przez \emph{gen} rozumiemy dalej ciąg bitów dla 
+pojedynczego hosta, po jednym bicie na każdy obiekt, gdzie wartość bitu odpowiada istnieniu repliki
+danego obiektu na tym hoście. Mutacja realizowana jest przez iterowanie po wszystkich obiektach 
+i hostach, i z pewnym niewielkim prawdopodobieństwem (2\%) dodawaniu lub usuwaniu replik z hosta, 
+tak by zmienić stan istniejący (odwracanie bitów w genie). Jeśli w wyniku takiego odwrócenia bitu
+powstaje genom niepoprawny (schemat replikacji nie spełniający założeń), bit jest odwracany ponownie. 
+Krzyżowanie to wymiana fragmentów genów pomiędzy dwoma genomami, wybranych poprzez wylosowanie w 
+każdym genie dwóch punktów. Jeśli po wymianie stan jest niepoprawny, wymieniana jest reszta genu,
+to wystarczy by zagwarantować poprawność rezultatu krzyżowania. Selekcja odbywa się metodą ruletkową,
+z podejściem elitystycznym (kopiowanie najlepszych osobników).
 
 \section{Narzędzia}
 Do realizacji implementacyjnych aspektów projektu wykorzystaliśmy język Python i bibliotekę
