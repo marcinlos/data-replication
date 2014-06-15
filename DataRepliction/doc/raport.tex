@@ -72,6 +72,11 @@ sumaryczny.
 Nieco bardziej szczegółowy opis, wraz z wzorami na całkowity koszt znaleźć można w \cite{Ahmad}.
 
 \section{Istniejące rozwiązania}
+Problem wydaje się być problemem naturalnym i praktycznym. Pomimo tego nie istnieje wiele prac, które podejmowałyby jego temat. Być może jest to związane z jego trudnością. Dowód pokazujący trudność problemu znajduje się w \cite{newAhmad}. Szczegółowy opis algorytmu genetycznego rozwiązującego wersję statyczną problemu, znajduje się w \cite{Ahmad} oraz, rozwinięty, w \cite{newAhmad}.
+
+Analizy oraz rozwiązania mniej ogólnych problemów tego typu dostarczają m. in. Wolfson w \cite{Wolfson}, który opisuje optymalny algorytm replikacji jednego pliku w topologiach drzewiastych czy Mahmoud, który w \cite{Mahmoud} prezentuje iteracyjne podejście w rozwiązaniu uszczegółowienia problemu DRP, FAP.
+
+W celu uzyskania szerokiej listy rozwiązań problemów blisko powiązanych z DRP, zainteresowanych czytelników odsyłamy do przypisów w \cite{newAhmad}, w których zawartych jest kilkanaście pozycji opisujących próby rozwiązania wielu blisko spokrewnionych z DRP problemów (jednak nie samego DRP).
 
 \section{Rozwiązanie bazowe}
 Jako punkt wyjściowy przyjęliśmy rozwiązanie zaproponowane w \cite{Ahmad}. Po szczegółowy jego opis
@@ -181,7 +186,7 @@ populacji, po jednej na instancję programu), zasymulowane zostało 20 pokoleń.
 Jak widać na powyższych wykresach, zastosowanie algorytmu wielopopulacyjnego nie przyniosło zauważalnej
 poprawy w otrzymanych rozwiązaniach.
 
-[coś o próbach redukcji do ILP]
+Podczas prac nad programem rozważaliśmy także możliwość redukcji problemu do problemu ILP oraz zastosowanie jednego z szeroko dostępnych solverów liniowych. Zdecydowaliśmy się na tą próbę, ponieważ problem (szczególnie dokładne wzory na obliczenie sumarycznego kosztu) mocno przypominał, na pierwszy rzut oka, równanie liniowe. Po nieudanych próbach okazało się jednak, że nie byliśmy w stanie przedstawić problemu w formie, która odpowiada problemom typu ILP, więc pomysł porzuciliśmy.
 
 \section{Podsumowanie}
 
@@ -249,6 +254,22 @@ zmiany/ulepszenia, dla których jest to istotne.
   \bibitem{mpi4py}
   Biblioteka mpi4py,
   \url{http://mpi4py.scipy.org/}
+  
+  \bibitem{newAhmad} 
+  T. Loukopoulos I. Ahmad.
+  \emph{Static and adaptive distributed data replication using genetic algorithms}
+
+  \bibitem{Wolfson} 
+  O. Wolfson, S. Jajodia, Y. Huang.
+  \emph{An adaptive data replication
+algorithm}
+
+  \bibitem{Mahmoud}
+  S. Mahmoud J.S. Riordon.
+  \emph{Optimal allocation of resources in
+distributed information networks}
+
+
 
 \end{thebibliography}
 
