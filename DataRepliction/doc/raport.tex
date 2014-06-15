@@ -47,6 +47,9 @@
 Celem projektu było wybranie jednego problemu obliczeniowego, zapoznanie się z istniejącymi jego
 rozwiązaniami, oraz próba ulepszenia któregoś z nich. Nasz wybór padł na problem replikacji danych
 w systemach rozproszonych, oraz rozwiązanie oparte na algorytmie genetycznym, opisane w \cite{Ahmad}.
+Na jego podstawie zaimplementowaliśmy algorytm wielopopulacyjny, oparty na modelu wyspowym. Dla danych
+generowanych w sposób identyczny jak w oryginalnym artykule nie zaobserwowaliśmy znaczących zmian w 
+jakości rozwiązań.
 
 \section{Opis problemu}
 Dany jest system rozproszony, składający się z \(M\) hostów \(\{H_i\}\), o pojemnościach \(s_i\), 
@@ -82,10 +85,10 @@ W celu uzyskania szerokiej listy rozwiązań problemów blisko powiązanych z DR
 Jako punkt wyjściowy przyjęliśmy rozwiązanie zaproponowane w \cite{Ahmad}. Po szczegółowy jego opis
 odsyłamy do samej pracy, ta sekcja zawiera krótkie objaśnienie jego działania i używanych pojęć.
 
-Algorytm składa się z dwóch głównych części -- algorytmu zachłannego (\texttt{Simple Replication 
+Algorytm składa się z dwóch głównych części -- algorytmu zachłannego (\textit{Simple Replication 
 Algorithm}), używanego do tworzenia populacji początkowej, oraz algorytmu genetycznego (GRA).
 
-Działanie SRA opiera się o ,,korzyść z replikacji'' (\texttt{replication benefit}), stanowiącego
+Działanie SRA opiera się o ,,korzyść z replikacji'' (\textit{replication benefit}), stanowiącego
 dla każdej party \((\textrm{obiekt}, \textrm{host})\) miarę ,,lokalnego zysku'' z replikacji tego
 obiektu na tym hoście (stosunek zysku -- jak zmieni się koszt indukowany przez operacje 
 \textbf{tego hosta} na tym obiekcie -- do wielkości obiektu, tj. zysk na jednostkę wielkości).
@@ -106,26 +109,32 @@ każdym genie dwóch punktów. Jeśli po wymianie stan jest niepoprawny, wymieni
 to wystarczy by zagwarantować poprawność rezultatu krzyżowania. Selekcja odbywa się metodą ruletkową,
 z podejściem elitystycznym (kopiowanie najlepszych osobników).
 
-\section{Narzędzia}
-Do realizacji implementacyjnych aspektów projektu wykorzystaliśmy język Python i bibliotekę
-PyEvolve \cite{pyevolve}, dostarczającą różnych komponentów (np. strategie selekcji) pozwalających
-budować algorytmy genetyczne. Do implementacji rozproszonej użyte zostało MPI, za pośrednictwem
-Pythonowych bindingów udostępnianych przez bibliotekę mpi4py \cite{mpi4py}.
+\section{Modyfikacje}
+Na podstawie opisanego wyżej algorytmu stworzyliśmy rozproszoną wersję wielopopulacyjną, opartą na 
+modelu wyspowym -- równolegle symulowana jest ewolucja \(N\) populacji, co \(k\) kroków wymienianych 
+jest cyklicznie \(m\) najlepszych osobników. W testach przyjęto odpowiednio \(N=12\), \(k=5\),
+\(m=3\).
 
-\section{Przebieg prac}
-Pierwszym celem po dokładnym zapoznaniem się z artykułem, na którym bazuje projekt, było odtworzenie
-zaprezentowanych w nim wyników. W tym celu zaimplementowany został dokładnie przedstawiony w nim
-algorytm (zarówno deterministyczny zachłanny -- SRA -- jak i główny -- GRA). Początkowo planowaliśmy
-użyć nieco innego generatora danych do testów, takiego, który w naszym odczuciu mógłby lepiej
-odwzorowywać własności instancji problemu, które występować mogą w praktyce. Dobranie jednak parametrów
-tak, by zaobserwować wyniki podobne do tych przedstawionych w artykule bazowym okazało się trudne,
-w związku z czym odtworzyliśmy wiernie sposób generacji danych w nim opisany. Po tym zabiegu
-udało nam się odtworzyć dość dobrze oryginalne wyniki. Poniższe wykresy przedstawiają kolejno: ilość 
-stworzonych replik (średnia ilość replik na obiekt), oraz zysk (jaki ułamek kosztu całkowitego
-pozwoliło zaoszczędzić stworzenie replik) przy stałej ilości obiektów (150), i zmiennej ilości
-hostów. Są analogiczne do tych umieszczonych w artykule bazowym, brak jednak wykresu obrazującego
-zysk przy stałej ilości hostów i zmiennej ilości obiektów, ze względu na bardzo duży czas obliczeń
-(wada języka Python). Algorytm genetyczny skonfigurowany był na stworzenie 10 pokoleń.
+\section{Rezultaty}
+W celu porównania rozwiązań osiąganych algorytmem opisanym w artykule, oraz wersji wielopopulacyjnej,
+odtworzony został sposób generowania problemów testowych użyty w \cite{Ahmad}. Algorytm ten posiada
+jeden parametr \(U\), opisujący procent operacji będących zapisem (testy przeprowadzane były dla 
+\(U\in\{0.02, 0.05, 0.1\}\)). Koszty połączeń między hostami 
+losowane są z rozkładem jednostajnym ze zbioru \(\{1,\ldots,10\}\). Dla każdego obiektu losowany
+jest host stanowiący jego pierwotną lokację. Dla każdej party obiekt-host losowana jest ilość odczytów
+(rozkład jednostajny na \(\{1,\ldots,40\}\)). Na podstawie sumarycznej ilości odczytów \(R\) losowana
+jest ilość zapisów -- liczba z przedziału \(\{\frac{1}{2}W,\ldots,\frac{3}{2}W\}\), gdzie 
+\(W = R\,U\). Zapisy te są następnie losowo rozdzielane pomiędzy pary obiekt-host. Wielkości obiektów
+są losowane z rozkładem jednostajnym ze zbioru \(\{15,\ldots,55\}\). Niech \(S\) będzie łącznym 
+rozmiarem wszystkich obiektów. Pojemności hostów losowane sa z 
+\(\{\frac{1}{2}CS,\ldots,\frac{3}{2}CS\}\), gdzie \(C=0.15\).
+
+Poniższe wykresy przedstawiają wyniki osiągnięte przy użyciu podstawowej wersji algorytmu.
+Widać na nich kolejno: ilość stworzonych replik (średnia ilość replik na obiekt), oraz zysk (jaki 
+ułamek kosztu całkowitego pozwoliło zaoszczędzić stworzenie replik) przy stałej ilości obiektów (150),
+i zmiennej ilości hostów. Są analogiczne do tych umieszczonych w artykule bazowym, brak jednak wykresu
+obrazującego zysk przy stałej ilości hostów i zmiennej ilości obiektów, ze względu na bardzo duży czas
+obliczeń (wada języka Python). Algorytm genetyczny skonfigurowany był na stworzenie 10 pokoleń.
 
 \begin{figure}[H]
     \centering
@@ -135,20 +144,13 @@ zysk przy stałej ilości hostów i zmiennej ilości obiektów, ze względu na b
     \end{subfigure}
     \begin{subfigure}[b]{0.49\textwidth}
         \includegraphics[width=\textwidth]{plots/saves}
-        \caption{skalowane}
+        \caption{zysk z replik}
     \end{subfigure}
 
     \caption{Wyniki dla algorytmu z artykułu}
     \label{plot:original}
 \end{figure}
 
-Następnie przystąpiliśmy do stworzenia wielopopulacyjnej wersji algorytmu opartej na modelu wyspowym.
-Ze względu na stosunkowo duże czasy obliczeń, by w rozsądnym czasie uzyskać wyniki dla odpowiednio
-dużej liczby wysp, zdecydowaliśmy na zaimplementowanie algorytmu w wersji rozproszonej. Używany przez
-nas framework PyEvolve posiada wbudowaną obsługę wielopopulacyjności i migracji osobników pomiędzy
-populacjami, opartą na MPI, jednak na chwilę obecną zdaje się być dość mało dojrzała, i niezbyt dobrze
-przetestowana -- doprowadzenie naszej implementacji do działania wymagało pewnej ingerencji w 
-odpowiadające za to mechanizmy platformy. 
 
 Testy wersji wielopopulacyjnej przeprowadzone zostały na komputerze Zeus, z użyciem 12 rdzeni (12 
 populacji, po jednej na instancję programu), zasymulowane zostało 20 pokoleń.
@@ -186,7 +188,21 @@ populacji, po jednej na instancję programu), zasymulowane zostało 20 pokoleń.
 Jak widać na powyższych wykresach, zastosowanie algorytmu wielopopulacyjnego nie przyniosło zauważalnej
 poprawy w otrzymanych rozwiązaniach.
 
+
+\section{Uwagi}
+Początkowo planowaliśmy użyć nieco innego generatora danych do testów, takiego, który w naszym odczuciu
+mógłby lepiej odwzorowywać własności instancji problemu, które występować mogą w praktyce. Dobranie 
+jednak parametrów tak, by zaobserwować wyniki podobne do tych przedstawionych w artykule bazowym okazało
+się trudne, w związku z czym odtworzyliśmy wiernie sposób generacji danych w nim opisany. Po tym zabiegu
+udało nam się odtworzyć dość dobrze oryginalne wyniki. 
+
 Podczas prac nad programem rozważaliśmy także możliwość redukcji problemu do problemu ILP oraz zastosowanie jednego z szeroko dostępnych solverów liniowych. Zdecydowaliśmy się na tą próbę, ponieważ problem (szczególnie dokładne wzory na obliczenie sumarycznego kosztu) mocno przypominał, na pierwszy rzut oka, równanie liniowe. Po nieudanych próbach okazało się jednak, że nie byliśmy w stanie przedstawić problemu w formie, która odpowiada problemom typu ILP, więc pomysł porzuciliśmy.
+
+\section{Narzędzia}
+Do realizacji implementacyjnych aspektów projektu wykorzystaliśmy język Python i bibliotekę
+PyEvolve \cite{pyevolve}, dostarczającą różnych komponentów (np. strategie selekcji) pozwalających
+budować algorytmy genetyczne. Do implementacji rozproszonej użyte zostało MPI, za pośrednictwem
+Pythonowych bindingów udostępnianych przez bibliotekę mpi4py \cite{mpi4py}.
 
 \section{Podsumowanie}
 
